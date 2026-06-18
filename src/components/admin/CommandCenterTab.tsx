@@ -133,7 +133,7 @@ export default function CommandCenterTab({
                       <StatusBadge status={offer.status} />
                     </td>
                     <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
-                      {offer.pdf_url ? (
+                      {offer.pdf_url && offer.offer_price > 0 ? (
                         <a
                           href={getPdfUrl(offer.pdf_url)}
                           target="_blank"

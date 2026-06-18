@@ -20,7 +20,7 @@ export default function OfferStatusModal({ offer, onClose, onSuccess }: OfferSta
     setLoading(true)
     setError(null)
     try {
-      await offersApi.updateStatus(offer.id, newStatus, notes)
+      await offersApi.updateStatus(offer.uuid, newStatus, notes)
       onSuccess('Status penawaran berhasil diperbarui.')
       onClose()
     } catch (err: any) {

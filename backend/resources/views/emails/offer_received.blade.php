@@ -34,16 +34,24 @@
         <hr style="border:none;border-top:1px solid #e0e3e5;margin:16px 0;">
 
         <!-- Price Box -->
+        @if($offer->offer_price > 0)
         <div style="background:#000;color:#fff;padding:12px 16px;border-radius:4px;margin-bottom:16px;">
           <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;opacity:0.7;">Harga Penawaran Pemohon</div>
           <div style="font-size:20px;font-weight:bold;margin-top:4px;">Rp {{ number_format($offer->offer_price, 0, ',', '.') }}</div>
-          <div style="font-size:9px;opacity:0.6;margin-top:2px;">Harga Limit: Rp {{ number_format($property->price, 0, ',', '.') }}</div>
+          <div style="font-size:9px;opacity:0.6;margin-top:2px;">Harga Limit: Rp {{ number_format($property->harga_penawaran, 0, ',', '.') }}</div>
         </div>
+        @else
+        <div style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:12px 16px;border-radius:4px;margin-bottom:16px;">
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;opacity:0.8;">Tipe Permohonan</div>
+          <div style="font-size:18px;font-weight:bold;margin-top:4px;">Tanya Detail Aset</div>
+          <div style="font-size:9px;opacity:0.8;margin-top:2px;">Calon pembeli meminta dihubungi oleh manajemen untuk informasi lebih lanjut.</div>
+        </div>
+        @endif
 
         <table width="100%">
           <tr>
             <td style="font-size:12px;color:#45464d;padding:4px 0;">Nomor Referensi</td>
-            <td style="font-size:12px;font-weight:bold;text-align:right;font-family:monospace;">REQ-{{ str_pad($offer->id, 4, '0', STR_PAD_LEFT) }}</td>
+            <td style="font-size:12px;font-weight:bold;text-align:right;font-family:monospace;">REQ-{{ strtoupper(substr($offer->uuid, 0, 8)) }}</td>
           </tr>
         </table>
       </td></tr>

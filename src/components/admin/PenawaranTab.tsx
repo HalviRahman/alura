@@ -20,7 +20,7 @@ export default function PenawaranTab({ onOfferClick }: PenawaranTabProps) {
   const fetchOffers = useCallback(async (p: number) => {
     setLoading(true)
     try {
-      const res = await offersApi.list({ status: filterStatus || undefined, page: p })
+      const res = await offersApi.list({ status: filterStatus || undefined, page: p, type: 'offer' })
       setOffers(res.data.data)
       setTotalPages(res.data.meta.last_page)
       setTotal(res.data.meta.total)
@@ -121,7 +121,7 @@ export default function PenawaranTab({ onOfferClick }: PenawaranTabProps) {
                       <div className="font-mono text-[10px]">{offer.property?.listing_id || ''}</div>
                     </td>
                     <td className="px-5 py-3 font-mono text-sm font-bold text-primary whitespace-nowrap">
-                      {formatPriceFull(offer.offer_price)}
+                      {offer.offer_price > 0 ? formatPriceFull(offer.offer_price) : <span className="text-amber-600 font-bold uppercase tracking-wider text-xs">Tanya Detail</span>}
                     </td>
                     <td className="px-5 py-3">
                       {offer.agent ? (

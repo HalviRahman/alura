@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { formatPriceFull } from '../../data/properties'
-import { offersApi } from '../../services/api'
+import { offersApi, getPdfUrl } from '../../services/api'
 import type { Property } from '../../types'
 
 interface OfferModalProps {
@@ -94,7 +94,7 @@ export default function OfferModal({ property, refCode, onClose }: OfferModalPro
             </p>
             {pdfUrl && (
               <a
-                href={`http://localhost:8000${pdfUrl}`}
+                href={getPdfUrl(pdfUrl)}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 bg-secondary text-on-secondary font-mono text-xs font-bold px-5 py-2.5 rounded-lg hover:bg-opacity-95 transition-all mt-2"

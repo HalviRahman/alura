@@ -5,7 +5,7 @@ import StatusBadge from '../components/ui/StatusBadge'
 import RiskBadge from '../components/ui/RiskBadge'
 import { formatPriceFull, formatPrice, getSpkStatus } from '../data/properties'
 import {
-  adminApi, offersApi, propertiesApi,
+  adminApi, offersApi, propertiesApi, getPdfUrl,
   type SpkAlert, type DashboardData,
 } from '../services/api'
 import type { Offer, OfferStatus, Property, PropertyType, RiskLevel } from '../types'
@@ -15,6 +15,7 @@ import UserManagementTab from '../components/admin/UserManagementTab'
 import SpkTrackerTab from '../components/admin/SpkTrackerTab'
 import ReportsTab from '../components/admin/ReportsTab'
 import DistributionMapTab from '../components/admin/DistributionMapTab'
+import TanyaDetailTab from '../components/admin/TanyaDetailTab'
 
 // ─── Toast Notification ────────────────────────────────────────────────────
 
@@ -123,7 +124,7 @@ function OfferStatusModal({
     setLoading(true)
     setError(null)
     try {
-      await offersApi.updateStatus(offer.id, newStatus, notes)
+      await offersApi.updateStatus(offer.uuid, newStatus, notes)
       onSuccess('Status penawaran berhasil diperbarui.')
       onClose()
     } catch (err: any) {
@@ -146,7 +147,9 @@ function OfferStatusModal({
           <div className="p-3 bg-surface-container-low rounded-lg">
             <p className="font-mono text-[10px] text-on-surface-variant uppercase">Pemohon</p>
             <p className="font-body text-sm font-bold text-on-surface">{offer.applicant_name}</p>
-            <p className="font-mono text-[10px] text-primary mt-0.5">Penawaran: {formatPriceFull(offer.offer_price)}</p>
+            <p className="font-mono text-[10px] text-primary mt-0.5">
+              {offer.offer_price > 0 ? `Penawaran: ${formatPriceFull(offer.offer_price)}` : 'Tipe: Tanya Detail Aset'}
+            </p>
           </div>
           {error && <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-xs rounded-lg">{error}</div>}
           <div>
@@ -745,7 +748,9 @@ function CommandCenterTab({
                     {offer.property?.title || '—'}
                     <div className="font-mono text-[10px]">ID: {offer.property?.listing_id || '—'}</div>
                   </td>
-                  <td className="px-6 py-4 font-mono text-sm font-bold text-primary">{formatPriceFull(offer.offer_price)}</td>
+                  <td className="px-6 py-4 font-mono text-sm font-bold text-primary">
+                    {offer.offer_price > 0 ? formatPriceFull(offer.offer_price) : <span className="text-amber-600 font-bold uppercase tracking-wider text-xs">Tanya Detail</span>}
+                  </td>
                   <td className="px-6 py-4">
                     {offer.agent ? (
                       <div className="flex items-center gap-2">
@@ -760,8 +765,8 @@ function CommandCenterTab({
                   </td>
                   <td className="px-6 py-4"><StatusBadge status={offer.status} /></td>
                   <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
-                    {offer.pdf_url ? (
-                      <a href={`http://localhost:8000${offer.pdf_url}`} target="_blank" rel="noreferrer"
+                    {offer.pdf_url && offer.offer_price > 0 ? (
+                      <a href={getPdfUrl(offer.pdf_url)} target="_blank" rel="noreferrer"
                         className="inline-flex items-center gap-1.5 text-primary hover:underline font-mono text-xs font-bold">
                         <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>Unduh
                       </a>
@@ -1031,7 +1036,7 @@ function PenawaranTab({
   const fetchOffers = useCallback(async (p: number) => {
     setLoading(true)
     try {
-      const res = await offersApi.list({ status: filterStatus || undefined, page: p })
+      const res = await offersApi.list({ status: filterStatus || undefined, page: p, type: 'offer' })
       setOffers(res.data.data)
       setTotalPages(res.data.meta.last_page)
       setTotal(res.data.meta.total)
@@ -1105,7 +1110,9 @@ function PenawaranTab({
                     <div className="max-w-[160px] truncate">{offer.property?.title || '—'}</div>
                     <div className="font-mono text-[10px]">{offer.property?.listing_id || ''}</div>
                   </td>
-                  <td className="px-5 py-3 font-mono text-sm font-bold text-primary whitespace-nowrap">{formatPriceFull(offer.offer_price)}</td>
+                  <td className="px-5 py-3 font-mono text-sm font-bold text-primary whitespace-nowrap">
+                    {offer.offer_price > 0 ? formatPriceFull(offer.offer_price) : <span className="text-amber-600 font-bold uppercase tracking-wider text-xs">Tanya Detail</span>}
+                  </td>
                   <td className="px-5 py-3">
                     {offer.agent ? (
                       <div>
@@ -1117,7 +1124,7 @@ function PenawaranTab({
                   <td className="px-5 py-3"><StatusBadge status={offer.status} /></td>
                   <td className="px-5 py-3" onClick={e => e.stopPropagation()}>
                     {offer.pdf_url ? (
-                      <a href={`http://localhost:8000${offer.pdf_url}`} target="_blank" rel="noreferrer"
+                      <a href={getPdfUrl(offer.pdf_url)} target="_blank" rel="noreferrer"
                         className="inline-flex items-center gap-1 text-primary hover:underline font-mono text-xs font-bold">
                         <span className="material-symbols-outlined text-[15px]">picture_as_pdf</span>PDF
                       </a>
@@ -1161,7 +1168,7 @@ function PenawaranTab({
 
 // ─── Main Admin Dashboard Page ─────────────────────────────────────────────
 
-type TabId = 'command' | 'properties' | 'offers' | 'analytics' | 'users' | 'spk' | 'reports' | 'map'
+type TabId = 'command' | 'properties' | 'offers' | 'tanya_detail' | 'analytics' | 'users' | 'spk' | 'reports' | 'map'
 
 export default function AdminDashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -1179,8 +1186,9 @@ export default function AdminDashboardPage() {
   const [deleteProperty, setDeleteProperty] = useState<Property | null>(null)
   const [isAddAssetOpen, setIsAddAssetOpen] = useState(false)
 
-  // Refresh trigger for AsetTab
+  // Refresh triggers
   const [propertyRefreshKey, setPropertyRefreshKey] = useState(0)
+  const [offerRefreshKey, setOfferRefreshKey] = useState(0)
 
   const loadDashboardData = useCallback(async () => {
     setIsLoading(true)
@@ -1203,6 +1211,7 @@ export default function AdminDashboardPage() {
 
   const handleOfferUpdateSuccess = async (msg: string) => {
     addToast('success', msg)
+    setOfferRefreshKey(k => k + 1)
     await loadDashboardData()
   }
 
@@ -1288,6 +1297,12 @@ export default function AdminDashboardPage() {
         )}
         {activeTab === 'offers' && (
           <PenawaranTab onOfferClick={offer => setSelectedOffer(offer)} />
+        )}
+        {activeTab === 'tanya_detail' && (
+          <TanyaDetailTab
+            onOfferClick={offer => setSelectedOffer(offer)}
+            refreshKey={offerRefreshKey}
+          />
         )}
 
         <footer className="mt-8 py-6 border-t border-outline-variant">

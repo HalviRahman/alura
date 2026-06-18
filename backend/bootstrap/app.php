@@ -28,5 +28,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request, \Throwable $e) => $request->is('api/*')
         );
+
+        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Terlalu banyak percobaan login. Silakan coba lagi dalam beberapa saat.',
+                ], 429);
+            }
+        });
     })
     ->create();

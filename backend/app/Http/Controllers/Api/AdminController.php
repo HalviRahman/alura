@@ -223,11 +223,10 @@ class AdminController extends Controller
         if ($request->input('format') === 'csv') {
             $offers = $query->get();
             $rows   = [];
-            $rows[] = ['ID','Tanggal','Pemohon','Email','Phone','Properti','Listing ID','Harga Penawaran','Kode Referral','Agen','Status'];
+            $rows[] = ['Tanggal','Pemohon','Email','Phone','Properti','Listing ID','Harga Penawaran','Kode Referral','Agen','Status'];
 
             foreach ($offers as $o) {
                 $rows[] = [
-                    $o->id,
                     $o->created_at->format('d/m/Y H:i'),
                     $o->applicant_name,
                     $o->applicant_email,
@@ -241,7 +240,7 @@ class AdminController extends Controller
                 ];
             }
 
-            $csv      = implode("\n", array_map(fn ($r) => implode(',', array_map(fn ($c) => '"' . str_replace('"', '""', $c) . '"', $r)), $rows));
+            $csv      = implode("\n", array_map(fn ($r) => implode(',', array_map(fn ($c) => '"' . str_replace('"', '""', (string) $c) . '"', $r)), $rows));
             $filename = 'laporan-penawaran-' . now()->format('Ymd') . '.csv';
 
             return response($csv, 200, [

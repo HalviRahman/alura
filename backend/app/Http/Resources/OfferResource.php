@@ -12,7 +12,8 @@ class OfferResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'              => $this->id,
+            'id'              => $this->uuid,
+            'uuid'            => $this->uuid,
             'property'        => $this->whenLoaded('property', fn () => [
                 'id'         => $this->property->id,
                 'title'      => $this->property->title,
@@ -28,7 +29,7 @@ class OfferResource extends JsonResource
             'notes'           => $this->notes,
             'pdf_url'         => $this->when(
                 $this->pdf_path,
-                fn () => url('/api/offers/' . $this->id . '/pdf')
+                fn () => url('/api/offers/' . $this->uuid . '/pdf')
             ),
             'agent'           => $this->whenLoaded('agent', fn () => [
                 'id'   => $this->agent?->id,

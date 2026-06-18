@@ -16,6 +16,7 @@ type SidebarTab =
   | 'map'
   | 'properties'
   | 'offers'
+  | 'tanya_detail'
 
 const navItems: Array<{ icon: string; label: string; tab: SidebarTab }> = [
   { icon: 'dashboard',     label: 'Command Center',  tab: 'command'    },
@@ -27,8 +28,9 @@ const navItems: Array<{ icon: string; label: string; tab: SidebarTab }> = [
 ]
 
 const assetItems: Array<{ icon: string; label: string; tab: SidebarTab }> = [
-  { icon: 'home_work',     label: 'Aset Properti',  tab: 'properties' },
-  { icon: 'receipt_long',  label: 'Penawaran',      tab: 'offers'     },
+  { icon: 'home_work',     label: 'Aset Properti',       tab: 'properties' },
+  { icon: 'receipt_long',  label: 'Penawaran',           tab: 'offers'     },
+  { icon: 'contact_support', label: 'Tanya Detail Asset', tab: 'tanya_detail' },
 ]
 
 export default function AdminSidebar({ onAddAsset }: AdminSidebarProps) {

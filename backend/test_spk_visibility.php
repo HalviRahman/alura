@@ -7,11 +7,18 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
+// Pastikan Apartemen Pakuwon City berstatus expired SPK untuk keperluan testing
+$pakuwonProp = \App\Models\Property::where('title', 'Apartemen Pakuwon City')->first();
+if ($pakuwonProp && $pakuwonProp->agreement) {
+    $pakuwonProp->agreement->update(['end_date' => \Illuminate\Support\Carbon::today()->subDays(4)]);
+    $pakuwonProp->update(['is_published' => false]);
+}
+
 // 1. Ambil token manajemen (login via API)
 echo "\n=== TEST VISIBILITAS ASET EXPIRED SPK ===\n";
 echo "\n[1] Login sebagai MANAJEMEN...\n";
 
-$loginRes = Http::post('http://localhost:8000/api/auth/login', [
+$loginRes = Http::withHeaders(['X-Alura-Test' => 'true'])->post('http://localhost:8000/api/auth/login', [
     'email'    => 'admin@alura.id',
     'password' => 'password',
 ]);
@@ -26,7 +33,7 @@ if (!$loginRes->successful()) {
     echo "   User manajemen ditemukan: {$mgr->email}\n";
     // Reset password sementara untuk test
     $mgr->update(['password' => Hash::make('test12345')]);
-    $loginRes = Http::post('http://localhost:8000/api/auth/login', [
+    $loginRes = Http::withHeaders(['X-Alura-Test' => 'true'])->post('http://localhost:8000/api/auth/login', [
         'email'    => $mgr->email,
         'password' => 'test12345',
     ]);

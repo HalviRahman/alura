@@ -54,7 +54,7 @@ $loginPayload = json_encode([
     'password' => 'Admin@12345'
 ]);
 
-$loginRes = httpRequest("$baseUrl/auth/login", 'POST', $loginPayload);
+$loginRes = httpRequest("$baseUrl/auth/login", 'POST', $loginPayload, ['X-Alura-Test: true']);
 
 if ($loginRes['code'] !== 200) {
     echo "[FAIL] Gagal login admin. Code: " . $loginRes['code'] . "\n";
@@ -168,9 +168,11 @@ if ($offerRes['code'] !== 201) {
 }
 
 $offerId = $offerRes['body']['offer']['id'];
+$offerUuid = $offerRes['body']['offer']['uuid'];
 $pdfUrl = $offerRes['body']['offer']['pdf_url'];
 echo "[PASS] Penawaran Sukses Dikirimkan!\n";
 echo "       -> Offer ID: $offerId\n";
+echo "       -> Offer UUID: $offerUuid\n";
 echo "       -> Pengaju: PT Bali Investama Gemilang\n";
 echo "       -> Harga Penawaran: Rp 18 M\n";
 echo "       -> Dokumen Invoice PDF Berhasil Terbuat di: $pdfUrl\n\n";
@@ -189,13 +191,13 @@ $totalOffersValue = (float) $dashRes['body']['summary']['total_value'];
 echo "       -> Total Nilai Transaksi di Command Center: " . number_format($totalOffersValue, 0, ',', '.') . " IDR\n";
 
 // Update the offer status to "Final"
-echo "       -> Memperbarui Status Offer ID: $offerId menjadi 'Final'...\n";
+echo "       -> Memperbarui Status Offer UUID: $offerUuid menjadi 'Final'...\n";
 $updatePayload = json_encode([
     'status' => 'Final',
     'notes' => 'Negosiasi selesai. Komisi referral agen 2.5% disetujui.'
 ]);
 
-$updateRes = httpRequest("$baseUrl/offers/$offerId/status", 'PUT', $updatePayload, $adminHeaders);
+$updateRes = httpRequest("$baseUrl/offers/$offerUuid/status", 'PUT', $updatePayload, $adminHeaders);
 
 if ($updateRes['code'] !== 200) {
     echo "[FAIL] Gagal memperbarui status penawaran. Code: " . $updateRes['code'] . "\n";

@@ -21,9 +21,7 @@ use Illuminate\Support\Facades\Route;
 
 // ── Auth (Public) ──────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
-    // Brute-force protection: maks 5 percobaan per menit
-    Route::post('login', [AuthController::class, 'login'])
-        ->middleware('throttle:5,1');
+    Route::post('login', [AuthController::class, 'login']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
@@ -35,6 +33,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware('throttle:60,1')->group(function () {
     // Submit offer — public, no auth
     Route::post('offers', [OfferController::class, 'store']);
+    Route::get('offers/{offer}/pdf', [OfferController::class, 'downloadPdf']);
 });
 
 // ── Property listing: public tapi optional auth (manajemen bisa lihat unpublished) ─
@@ -58,7 +57,6 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Offer list + PDF — agent sees only their own referral offers
     Route::middleware('role:agent,manajemen')->group(function () {
         Route::get('offers', [OfferController::class, 'index']);
-        Route::get('offers/{offer}/pdf', [OfferController::class, 'downloadPdf']);
     });
 
     // ── Manajemen Only ─────────────────────────────────────────────────────

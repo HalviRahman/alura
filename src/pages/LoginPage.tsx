@@ -20,6 +20,44 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError]       = useState<string | null>(null)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+
+  useEffect(() => {
+    const renderCaptcha = () => {
+      const grecaptcha = (window as any).grecaptcha
+      if (grecaptcha && document.getElementById('recaptcha-container')) {
+        try {
+          grecaptcha.render('recaptcha-container', {
+            sitekey: import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeCxAcTAAAAAMx7HCoDu_7bA9NGuVdugc26QEB6',
+            callback: (token: string) => setCaptchaToken(token),
+            'expired-callback': () => setCaptchaToken(null),
+          })
+        } catch (e) {
+          try {
+            grecaptcha.reset()
+          } catch (err) {}
+        }
+      }
+    }
+
+    (window as any).onRecaptchaLoad = () => {
+      renderCaptcha()
+    }
+
+    if (!(window as any).grecaptcha) {
+      const script = document.createElement('script')
+      script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit'
+      script.async = true
+      script.defer = true
+      document.body.appendChild(script)
+    } else {
+      renderCaptcha()
+    }
+
+    return () => {
+      delete (window as any).onRecaptchaLoad
+    }
+  }, [])
 
   // Kalau sudah login, redirect langsung secara aman via useEffect
   useEffect(() => {
@@ -44,13 +82,24 @@ export default function LoginPage() {
     e.preventDefault()
     if (!email || !password) return
 
+    if (!captchaToken) {
+      setError('Silakan centang Captcha terlebih dahulu.')
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
     try {
-      const { user: loggedUser } = await login(email, password)
+      const { user: loggedUser } = await login(email, password, captchaToken)
       navigate(ROLE_REDIRECT[loggedUser.role], { replace: true })
     } catch (err: unknown) {
+      if ((window as any).grecaptcha) {
+        try {
+          (window as any).grecaptcha.reset()
+        } catch (e) {}
+      }
+      setCaptchaToken(null)
       const msg =
         (err as { response?: { data?: { message?: string } } })
           ?.response?.data?.message ?? 'Login gagal. Periksa email dan password Anda.'
@@ -145,6 +194,11 @@ export default function LoginPage() {
                     </span>
                   </button>
                 </div>
+              </div>
+
+              {/* Google reCAPTCHA */}
+              <div className="mb-5 flex justify-center">
+                <div id="recaptcha-container"></div>
               </div>
 
               {/* Submit */}

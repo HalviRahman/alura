@@ -11,6 +11,7 @@ return new class extends Migration
     {
         Schema::create('offers', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->foreignId('property_id')->constrained()->cascadeOnDelete();
             $table->foreignId('agent_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('applicant_name');

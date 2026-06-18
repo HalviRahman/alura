@@ -35,7 +35,7 @@
   </div>
   <div class="ref">
     <div style="font-size:8px;opacity:0.6;">DOKUMEN PENAWARAN RESMI</div>
-    <div style="font-size:11px;font-weight:bold;">REQ-{{ str_pad($offer->id, 4, '0', STR_PAD_LEFT) }}</div>
+    <div style="font-size:11px;font-weight:bold;">REQ-{{ strtoupper(substr($offer->uuid, 0, 8)) }}</div>
     <div style="font-size:8px;opacity:0.6;">{{ $offer->created_at?->format('d M Y') }}</div>
   </div>
 </div>
@@ -68,13 +68,23 @@
   </div>
 
   <!-- Harga Penawaran -->
+  @if($offer->offer_price > 0)
   <div class="price-box">
     <div class="price-label">Harga Penawaran Pemohon</div>
     <div class="price-value">Rp {{ number_format($offer->offer_price, 0, ',', '.') }}</div>
     <div style="font-size:8px;color:#76777d;margin-top:4px;">
-      Harga Limit ALURA: Rp {{ number_format($property->price, 0, ',', '.') }}
+      Harga Limit ALURA: Rp {{ number_format($property->harga_penawaran, 0, ',', '.') }}
     </div>
   </div>
+  @else
+  <div class="price-box" style="border-left: 4px solid #f8b803;">
+    <div class="price-label" style="color: #b28200;">Permohonan Informasi</div>
+    <div class="price-value" style="font-size: 16px;">Tanya Detail Aset</div>
+    <div style="font-size:8px;color:#76777d;margin-top:4px;">
+      Calon pembeli meminta dihubungi oleh manajemen untuk informasi lebih lanjut.
+    </div>
+  </div>
+  @endif
 
   <!-- Data Pemohon -->
   <div class="section">

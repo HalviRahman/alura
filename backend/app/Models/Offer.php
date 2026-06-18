@@ -18,7 +18,17 @@ class Offer extends Model
     public const STATUS_FINAL      = 'Final';
     public const STATUS_GUGUR      = 'Gugur';
 
+    protected static function booted()
+    {
+        static::creating(function ($offer) {
+            if (empty($offer->uuid)) {
+                $offer->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+
     protected $fillable = [
+        'uuid',
         'property_id',
         'agent_id',
         'applicant_name',
@@ -37,7 +47,10 @@ class Offer extends Model
             'offer_price' => 'integer',
         ];
     }
-
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
     // ── Relationships ──────────────────────────────────────────────────────
 
     public function property(): BelongsTo

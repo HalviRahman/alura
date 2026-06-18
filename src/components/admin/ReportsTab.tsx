@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { adminApi } from '../../services/api'
+import api, { adminApi } from '../../services/api'
 import type { Offer } from '../../types'
 import { formatPriceFull } from '../../data/properties'
 import StatusBadge from '../ui/StatusBadge'
@@ -42,13 +42,41 @@ export default function ReportsTab() {
   // Reset page when filters change
   useEffect(() => { setPage(1) }, [dateFrom, dateTo, status])
 
-  const handleExport = () => {
-    const params: Record<string, string> = {}
-    if (dateFrom) params.date_from = dateFrom
-    if (dateTo) params.date_to = dateTo
-    if (status) params.status = status
-    const url = adminApi.reportsExportUrl(params)
-    window.open(url, '_blank')
+  const handleExport = async () => {
+    try {
+      const params: Record<string, string> = {}
+      if (dateFrom) params.date_from = dateFrom
+      if (dateTo) params.date_to = dateTo
+      if (status) params.status = status
+      
+      const response = await api.get('/admin/reports', {
+        params: { ...params, format: 'csv' },
+        responseType: 'blob',
+      })
+      
+      const blob = new Blob([response.data], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      
+      let filename = `laporan-penawaran-${new Date().toISOString().slice(0, 10)}.csv`
+      const contentDisposition = response.headers['content-disposition']
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1]
+        }
+      }
+      
+      link.setAttribute('download', filename)
+      document.body.appendChild(link)
+      link.click()
+      link.parentNode?.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (err: any) {
+      console.error('Failed to export CSV:', err)
+      alert('Gagal mengekspor CSV. Silakan coba lagi.')
+    }
   }
 
   return (
@@ -139,7 +167,7 @@ export default function ReportsTab() {
                     <div className="font-body text-xs font-semibold line-clamp-1">{offer.property?.title || '—'}</div>
                     <div className="font-mono text-[9px] text-on-surface-variant">{offer.property?.listing_id || '—'}</div>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs font-bold text-primary">{formatPriceFull(offer.offer_price)}</td>
+                  <td className="px-4 py-3 font-mono text-xs font-bold text-primary">{offer.offer_price > 0 ? formatPriceFull(offer.offer_price) : <span className="text-amber-600 font-bold uppercase tracking-wider text-[10px]">Tanya Detail</span>}</td>
                   <td className="px-4 py-3">
                     <div className="font-body text-xs">{offer.agent?.name || '—'}</div>
                     <div className="font-mono text-[9px] text-on-surface-variant">{offer.referral_code || 'Direct'}</div>

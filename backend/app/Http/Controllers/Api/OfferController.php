@@ -102,12 +102,33 @@ class OfferController extends Controller
             $query->where('referral_code', $user->referral_code);
         }
 
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('applicant_name', 'like', "%{$search}%")
+                  ->orWhere('applicant_email', 'like', "%{$search}%")
+                  ->orWhere('applicant_phone', 'like', "%{$search}%")
+                  ->orWhereHas('property', function($pq) use ($search) {
+                      $pq->where('title', 'like', "%{$search}%")
+                        ->orWhere('listing_id', 'like', "%{$search}%");
+                  });
+            });
+        }
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
         if ($request->filled('property_id')) {
             $query->where('property_id', $request->property_id);
+        }
+
+        if ($request->filled('type')) {
+            if ($request->type === 'inquiry') {
+                $query->where('offer_price', 0);
+            } elseif ($request->type === 'offer') {
+                $query->where('offer_price', '>', 0);
+            }
         }
 
         $offers = $query->paginate(20);
@@ -150,24 +171,17 @@ class OfferController extends Controller
     }
 
     /**
-     * GET /api/offers/{id}/pdf
-     * Download PDF penawaran — manajemen atau agen yang memiliki offer tersebut.
+     * GET /api/offers/{uuid}/pdf
+     * Download PDF penawaran — publik via UUID (aman karena UUID tidak tertebak).
      */
     public function downloadPdf(Request $request, Offer $offer): Response|JsonResponse
     {
-        $user = $request->user();
-
-        // Otorisasi: manajemen boleh semua, agen hanya offer via kode referral-nya
-        if (!$user->isManajemen() && $offer->referral_code !== $user->referral_code) {
-            return response()->json(['message' => 'Akses ditolak.'], 403);
-        }
-
         if (!$offer->pdf_path || !Storage::disk('public')->exists($offer->pdf_path)) {
             return response()->json(['message' => 'PDF tidak tersedia.'], 404);
         }
 
         $content  = Storage::disk('public')->get($offer->pdf_path);
-        $filename = "penawaran-{$offer->id}-{$offer->applicant_name}.pdf";
+        $filename = "penawaran-{$offer->uuid}-{$offer->applicant_name}.pdf";
 
         return response($content, 200, [
             'Content-Type'        => 'application/pdf',
@@ -180,7 +194,7 @@ class OfferController extends Controller
     private function generateOfferPdf(Offer $offer, Property $property, ?User $agent): string
     {
         $pdf  = Pdf::loadView('pdf.offer', compact('offer', 'property', 'agent'));
-        $path = "offers/offer-{$offer->id}.pdf";
+        $path = "offers/offer-{$offer->uuid}.pdf";
         Storage::disk('public')->put($path, $pdf->output());
         return $path;
     }

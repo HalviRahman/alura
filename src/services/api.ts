@@ -41,11 +41,17 @@ api.interceptors.response.use(
   }
 )
 
+export function getPdfUrl(url: string | null | undefined): string {
+  if (!url) return ''
+  return url
+}
+
 // ─── Auth ──────────────────────────────────────────────────────────────────
 
 export interface LoginPayload {
   email: string
   password: string
+  'g-recaptcha-response'?: string | null
 }
 
 export interface LoginResponse {
@@ -108,14 +114,14 @@ export const offersApi = {
   submit: (payload: SubmitOfferPayload) =>
     api.post<{ message: string; offer: Offer }>('/offers', payload),
 
-  list: (params?: { status?: OfferStatus; page?: number }) =>
+  list: (params?: { status?: OfferStatus; page?: number; search?: string; type?: 'offer' | 'inquiry' }) =>
     api.get<PaginatedResponse<Offer>>('/offers', { params }),
 
-  updateStatus: (id: number, status: OfferStatus, notes?: string) =>
-    api.put<{ message: string; offer: Offer }>(`/offers/${id}/status`, { status, notes }),
+  updateStatus: (uuid: string, status: OfferStatus, notes?: string) =>
+    api.put<{ message: string; offer: Offer }>(`/offers/${uuid}/status`, { status, notes }),
 
-  downloadPdf: (id: number) =>
-    api.get(`/offers/${id}/pdf`, { responseType: 'blob' }),
+  downloadPdf: (uuid: string) =>
+    api.get(`/offers/${uuid}/pdf`, { responseType: 'blob' }),
 }
 
 // ─── Agent ─────────────────────────────────────────────────────────────────

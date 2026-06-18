@@ -70,6 +70,7 @@ export type OfferStatus = 'Pending' | 'Follow Up' | 'Reviewed' | 'Final' | 'Gugu
 
 export interface Offer {
   id: number
+  uuid: string
   property: {
     id: number
     title: string

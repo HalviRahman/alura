@@ -15,7 +15,7 @@ interface AuthContextValue {
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (email: string, password: string) => Promise<{ user: User; token: string }>
+  login: (email: string, password: string, captchaToken?: string | null) => Promise<{ user: User; token: string }>
   logout: () => Promise<void>
   hasRole: (role: UserRole | UserRole[]) => boolean
 }
@@ -48,8 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string) => {
-    const res = await authApi.login({ email, password })
+  const login = async (email: string, password: string, captchaToken?: string | null) => {
+    const res = await authApi.login({ email, password, 'g-recaptcha-response': captchaToken })
     const { token: newToken, user: newUser } = res.data
 
     localStorage.setItem('alura_token', newToken)

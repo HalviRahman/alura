@@ -3,6 +3,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom'
 import TopNavBar from '../components/layout/TopNavBar'
 import Footer from '../components/layout/Footer'
 import OfferModal from '../components/property/OfferModal'
+import DetailInquiryModal from '../components/property/DetailInquiryModal'
 import RiskBadge from '../components/ui/RiskBadge'
 import { formatPriceFull, getSpkStatus } from '../data/properties'
 import { propertiesApi } from '../services/api'
@@ -20,6 +21,7 @@ export default function PropertyDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [inquiryModalOpen, setInquiryModalOpen] = useState(false)
   const [activeImg, setActiveImg] = useState(0)
 
   useEffect(() => {
@@ -262,12 +264,12 @@ export default function PropertyDetailPage() {
                 <span className="material-symbols-outlined text-[20px]">send</span>
                 Ajukan Penawaran
               </button>
-              <a
-                href={`mailto:support@alura.id?subject=Tanya Detail Aset: ${property.title} (${property.listing_id})`}
-                className="w-full mt-3 bg-transparent border border-outline text-primary font-body font-bold py-3 rounded-lg hover:bg-surface-container-low transition-colors inline-flex items-center justify-center"
+              <button
+                onClick={() => setInquiryModalOpen(true)}
+                className="w-full mt-3 bg-transparent border border-outline text-primary font-body font-bold py-3 rounded-lg hover:bg-surface-container-low transition-colors inline-flex items-center justify-center cursor-pointer"
               >
                 Tanya Detail Aset
-              </a>
+              </button>
               <p className="mt-4 font-body text-[11px] text-center text-on-surface-variant leading-tight">
                 Dengan menekan tombol di atas, Anda menyetujui syarat dan ketentuan Marketplace ALURA.
               </p>
@@ -284,6 +286,15 @@ export default function PropertyDetailPage() {
           property={property}
           refCode={refCode}
           onClose={() => setModalOpen(false)}
+        />
+      )}
+
+      {/* Detail Inquiry Modal */}
+      {inquiryModalOpen && (
+        <DetailInquiryModal
+          property={property}
+          refCode={refCode}
+          onClose={() => setInquiryModalOpen(false)}
         />
       )}
     </div>

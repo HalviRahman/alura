@@ -335,7 +335,7 @@ export default function AgentDashboardPage() {
                             {lead.property?.title || '—'}
                             <div className="font-mono text-[10px]">ID: {lead.property?.listing_id || '—'}</div>
                           </td>
-                          <td className="p-4 font-mono text-xs font-bold text-primary">{formatPriceFull(lead.offer_price)}</td>
+                          <td className="p-4 font-mono text-xs font-bold text-primary">{lead.offer_price > 0 ? formatPriceFull(lead.offer_price) : <span className="text-amber-600 font-bold uppercase tracking-wider text-[10px]">Tanya Detail</span>}</td>
                           <td className="p-4"><StatusBadge status={lead.status} /></td>
                         </tr>
                       ))
