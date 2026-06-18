@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import logoImg from '../../assets/logo.png'
 
 interface AdminSidebarProps {
   onAddAsset?: () => void
@@ -96,8 +97,8 @@ export default function AdminSidebar({ onAddAsset }: AdminSidebarProps) {
       {/* Brand */}
       <div className="mb-6 px-1 flex items-center justify-between">
         <div>
-          <h1 className="font-headline font-black text-2xl text-primary">ALURA</h1>
-          <p className="font-mono text-[10px] text-on-surface-variant tracking-wider uppercase mt-0.5">Admin Console</p>
+          <img src={logoImg} className="h-8 w-auto object-contain" alt="ALURA Logo" />
+          <p className="font-mono text-[10px] text-on-surface-variant tracking-wider uppercase mt-1">Admin Console</p>
         </div>
         {/* Close button — mobile only */}
         <button
@@ -161,9 +162,9 @@ export default function AdminSidebar({ onAddAsset }: AdminSidebarProps) {
         >
           <span className="material-symbols-outlined text-[24px]">menu</span>
         </button>
-        <div className="flex-1 min-w-0">
-          <span className="font-headline font-black text-xl text-primary">ALURA</span>
-          <span className="font-mono text-[10px] text-on-surface-variant ml-2 uppercase tracking-wider hidden sm:inline">Admin Console</span>
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <img src={logoImg} className="h-6 w-auto object-contain" alt="ALURA Logo" />
+          <span className="font-mono text-[10px] text-on-surface-variant ml-1 uppercase tracking-wider hidden sm:inline">Admin Console</span>
         </div>
         {onAddAsset && (
           <button

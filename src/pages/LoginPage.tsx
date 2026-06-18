@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import type { UserRole } from '../types'
+import logoImg from '../assets/logo.png'
 
 // Redirect target per role
 const ROLE_REDIRECT: Record<UserRole, string> = {
@@ -64,13 +65,8 @@ export default function LoginPage() {
       {/* Top bar */}
       <header className="bg-surface border-b border-outline-variant h-16 flex items-center px-6">
         <div className="max-w-container-max mx-auto w-full flex items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
-              <span className="material-symbols-outlined text-on-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                home_work
-              </span>
-            </div>
-            <span className="font-headline font-bold text-2xl text-primary tracking-tight">ALURA</span>
+          <div className="flex items-center">
+            <img src={logoImg} className="h-9 w-auto object-contain" alt="ALURA Logo" />
           </div>
         </div>
       </header>

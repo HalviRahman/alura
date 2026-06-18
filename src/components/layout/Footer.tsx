@@ -1,9 +1,11 @@
+import logoImg from '../../assets/logo.png'
+
 export default function Footer() {
   return (
     <footer className="bg-surface-container-highest border-t border-outline-variant mt-8">
       <div className="w-full py-8 px-6 max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex flex-col items-center md:items-start gap-1">
-          <span className="font-headline font-bold text-2xl text-primary">ALURA</span>
+        <div className="flex flex-col items-center md:items-start gap-2">
+          <img src={logoImg} className="h-8 w-auto object-contain" alt="ALURA Logo" />
           <p className="font-mono text-[10px] text-on-surface-variant text-center md:text-left">
             © 2024 ALURA Institutional Assets. All Rights Reserved.
           </p>

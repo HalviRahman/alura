@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import logoImg from '../../assets/logo.png'
 
 export default function TopNavBar() {
   const location           = useLocation()
@@ -31,8 +32,8 @@ export default function TopNavBar() {
       <div className="flex justify-between items-center w-full px-6 max-w-container-max mx-auto h-16">
         {/* Logo */}
         <div className="flex items-center gap-8">
-          <Link to="/" className="font-headline font-bold text-2xl text-primary tracking-tight">
-            ALURA
+          <Link to="/" className="flex items-center">
+            <img src={logoImg} className="h-8 w-auto object-contain" alt="ALURA Logo" />
           </Link>
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
