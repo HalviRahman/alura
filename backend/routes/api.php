@@ -66,6 +66,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::put('properties/{property}', [PropertyController::class, 'update']);
         Route::delete('properties/{property}', [PropertyController::class, 'destroy']);
         Route::post('properties/{property}/images', [PropertyController::class, 'uploadImages']);
+        Route::delete('properties/{property}/images', [PropertyController::class, 'deleteImage']);
 
         // Offer status management
         Route::put('offers/{offer}/status', [OfferController::class, 'updateStatus']);

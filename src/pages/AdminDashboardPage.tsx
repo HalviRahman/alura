@@ -260,7 +260,49 @@ function EditPropertyDrawer({
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [currentImages, setCurrentImages] = useState<string[]>(property.images || [])
+  const [uploadingImages, setUploadingImages] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+
+  const handleDeleteImage = async (url: string) => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus foto ini?')) return
+    setError(null)
+    try {
+      await propertiesApi.deleteImage(property.id, url)
+      setCurrentImages(prev => prev.filter(img => img !== url))
+      onSuccess('Gambar properti berhasil dihapus.')
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || 'Gagal menghapus gambar.'
+      setError(errorMsg)
+    }
+  }
+
+  const handleUploadImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    
+    setUploadingImages(true)
+    setError(null)
+    
+    const formData = new FormData()
+    Array.from(files).forEach(file => {
+      formData.append('images[]', file)
+    })
+
+    try {
+      const res = await propertiesApi.uploadImages(property.id, formData)
+      setCurrentImages(res.data.images)
+      onSuccess('Gambar baru berhasil ditambahkan.')
+      if (e.target) {
+        e.target.value = ''
+      }
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || 'Gagal mengunggah gambar.'
+      setError(errorMsg)
+    } finally {
+      setUploadingImages(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -437,6 +479,51 @@ function EditPropertyDrawer({
                 <label className="block font-mono text-[10px] text-on-surface-variant uppercase tracking-wider mb-1">Tanggal Berakhir SPK</label>
                 <input type="date" value={form.spk_end_date} onChange={f('spk_end_date')} className="w-full bg-white border border-outline rounded-lg p-2.5 font-mono text-sm focus:ring-1 focus:ring-primary focus:outline-none" />
               </div>
+            </div>
+          </div>
+
+          {/* Section 3: Foto Properti */}
+          <div className="space-y-4">
+            <h3 className="font-headline font-bold text-sm text-primary uppercase tracking-wider border-b border-outline-variant pb-1">3. Foto Properti</h3>
+            
+            {/* List of current images */}
+            {currentImages.length > 0 ? (
+              <div className="grid grid-cols-3 gap-3">
+                {currentImages.map((url, index) => (
+                  <div key={url} className="relative group aspect-video bg-surface-container rounded-lg overflow-hidden border border-outline-variant">
+                    <img src={url} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteImage(url)}
+                      className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white"
+                      title="Hapus foto ini"
+                    >
+                      <span className="material-symbols-outlined text-[20px] bg-red-600 p-1.5 rounded-full hover:bg-red-700 transition-colors">delete</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-on-surface-variant italic">Belum ada foto properti.</p>
+            )}
+
+            {/* Upload new images */}
+            <div className="p-4 bg-surface-container-low border border-dashed border-outline-variant rounded-xl">
+              <label className="block font-mono text-[10px] text-on-surface-variant uppercase tracking-wider mb-2">Upload Foto Baru (Maks 10 file, @5MB)</label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleUploadImages}
+                disabled={uploadingImages}
+                className="w-full bg-white border border-outline rounded-lg p-2 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-primary file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-on-primary hover:file:opacity-90 cursor-pointer"
+              />
+              {uploadingImages && (
+                <div className="flex items-center gap-2 mt-2 text-xs text-primary font-mono">
+                  <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+                  <span>Mengunggah foto...</span>
+                </div>
+              )}
             </div>
           </div>
 

@@ -97,6 +97,9 @@ export const propertiesApi = {
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } }
     ),
+
+  deleteImage: (id: number, url: string) =>
+    api.delete<{ message: string }>(`/properties/${id}/images`, { data: { url } }),
 }
 
 // ─── Offers ────────────────────────────────────────────────────────────────

@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOfferRequest;
 use App\Http\Requests\UpdateOfferStatusRequest;
 use App\Http\Resources\OfferResource;
+use App\Mail\OfferConfirmationMail;
 use App\Mail\OfferReceivedMail;
+use App\Mail\OfferStatusUpdatedMail;
 use App\Models\Offer;
 use App\Models\Property;
 use App\Models\User;
@@ -76,8 +78,23 @@ class OfferController extends Controller
                     new OfferReceivedMail($offer, $property, $agentId ? $agent ?? null : null)
                 );
             }
+            // Fallback: jika tidak ada user manajemen, kirim ke MANAJEMEN_EMAIL env
+            if ($manajemen->isEmpty() && $fallbackEmail = env('MANAJEMEN_EMAIL')) {
+                Mail::to($fallbackEmail)->queue(
+                    new OfferReceivedMail($offer, $property, $agentId ? $agent ?? null : null)
+                );
+            }
         } catch (\Exception $e) {
-            logger()->error('Offer email notification failed', ['offer_id' => $offer->id, 'error' => $e->getMessage()]);
+            logger()->error('Offer email notification (manajemen) failed', ['offer_id' => $offer->id, 'error' => $e->getMessage()]);
+        }
+
+        // Kirim konfirmasi email ke USER/PEMOHON
+        try {
+            Mail::to($offer->applicant_email)->queue(
+                new OfferConfirmationMail($offer, $property, $agentId ? $agent ?? null : null)
+            );
+        } catch (\Exception $e) {
+            logger()->error('Offer confirmation email (user) failed', ['offer_id' => $offer->id, 'error' => $e->getMessage()]);
         }
 
         $offer->load(['property', 'agent']);
@@ -162,6 +179,15 @@ class OfferController extends Controller
                 'is_published' => true,
                 'badge'        => null,
             ]);
+        }
+
+        // Kirim notifikasi status ke USER/PEMOHON
+        try {
+            Mail::to($offer->applicant_email)->queue(
+                new OfferStatusUpdatedMail($offer, $offer->property, $oldStatus)
+            );
+        } catch (\Exception $e) {
+            logger()->error('Offer status update email (user) failed', ['offer_id' => $offer->id, 'error' => $e->getMessage()]);
         }
 
         return response()->json([

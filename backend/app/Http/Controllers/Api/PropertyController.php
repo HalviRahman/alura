@@ -242,4 +242,37 @@ class PropertyController extends Controller
             'images'  => $property->images->map(fn ($img) => $img->url)->values(),
         ]);
     }
+
+    /**
+     * DELETE /api/properties/{id}/images
+     * Manajemen only — hapus gambar tertentu dari properti.
+     */
+    public function deleteImage(Request $request, Property $property): JsonResponse
+    {
+        $request->validate([
+            'url' => ['required', 'string'],
+        ]);
+
+        $url = $request->input('url');
+
+        // Cari gambar berdasarkan URL lengkap atau path relatif
+        $image = $property->images->first(function ($img) use ($url) {
+            return $img->url === $url || $img->path === $url;
+        });
+
+        if ($image) {
+            // Hapus file fisik dari storage jika lokal
+            if (!str_starts_with($image->path, 'http://') && !str_starts_with($image->path, 'https://')) {
+                Storage::disk('public')->delete($image->path);
+            }
+            $image->delete();
+            return response()->json([
+                'message' => 'Gambar berhasil dihapus.',
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Gambar tidak ditemukan.',
+        ], 404);
+    }
 }

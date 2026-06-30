@@ -8,60 +8,89 @@ export default {
   theme: {
     extend: {
       colors: {
-        "on-secondary-container": "#57657b",
-        "status-error": "#EF4444",
-        "inverse-surface": "#2d3133",
-        "on-surface": "#191c1e",
-        "outline-variant": "#c6c6cd",
-        "inverse-primary": "#bec6e0",
-        "surface-container-low": "#f2f4f6",
-        "on-surface-variant": "#45464d",
-        "error": "#ba1a1a",
-        "primary-fixed-dim": "#bec6e0",
-        "surface-container-highest": "#e0e3e5",
-        "on-error-container": "#93000a",
-        "surface-container": "#eceef0",
-        "status-info": "#3B82F6",
-        "tertiary-container": "#002113",
-        "surface-container-lowest": "#ffffff",
-        "on-primary-fixed": "#131b2e",
-        "primary-fixed": "#dae2fd",
-        "secondary-fixed-dim": "#b9c7e0",
-        "on-primary-container": "#7c839b",
-        "surface-variant": "#e0e3e5",
-        "on-secondary-fixed-variant": "#3a485c",
-        "primary-container": "#131b2e",
-        "secondary": "#515f74",
-        "tertiary-fixed": "#6ffbbe",
-        "on-secondary": "#ffffff",
-        "primary": "#000000",
-        "on-tertiary-fixed-variant": "#005236",
-        "surface-tint": "#565e74",
-        "secondary-container": "#d5e3fd",
-        "surface": "#f7f9fb",
-        "surface-container-high": "#e6e8ea",
-        "on-tertiary": "#ffffff",
-        "error-container": "#ffdad6",
-        "on-primary": "#ffffff",
-        "surface-bright": "#f7f9fb",
-        "on-secondary-fixed": "#0d1c2f",
-        "risk-medium": "#B45309",
-        "status-success": "#10B981",
-        "tertiary": "#000000",
-        "status-warning": "#F59E0B",
-        "risk-high": "#7F1D1D",
-        "on-primary-fixed-variant": "#3f465c",
-        "surface-dim": "#d8dadc",
-        "on-tertiary-fixed": "#002113",
-        "risk-low": "#065F46",
-        "background": "#f7f9fb",
-        "on-error": "#ffffff",
-        "inverse-on-surface": "#eff1f3",
-        "outline": "#76777d",
-        "on-background": "#191c1e",
-        "tertiary-fixed-dim": "#4edea3",
-        "on-tertiary-container": "#009668",
-        "secondary-fixed": "#d5e3fd",
+        // ── ALURA Brand ──────────────────────────────────────────
+        // Primary: Gold #FDD200  |  Dark base: #000000
+        // ─────────────────────────────────────────────────────────
+
+        // Core brand tokens
+        "primary":                      "#000000",        // black — main CTA bg
+        "on-primary":                   "#FDD200",        // gold text on black
+        "primary-container":            "#1a1600",        // near-black w/ warm tint
+        "on-primary-container":         "#FDD200",        // gold text on dark container
+        "primary-fixed":                "#FDD200",        // gold chip / tag bg
+        "primary-fixed-dim":            "#e6be00",        // slightly darker gold
+        "on-primary-fixed":             "#000000",        // black text on gold
+        "on-primary-fixed-variant":     "#1a1600",        // very dark on dim gold
+
+        // Secondary: warm charcoal
+        "secondary":                    "#3d3a00",        // dark warm brown-black
+        "on-secondary":                 "#FDD200",        // gold on secondary
+        "secondary-container":          "#FFF8CC",        // pale gold tint
+        "on-secondary-container":       "#1a1600",        // dark text on pale gold
+        "secondary-fixed":              "#FFF8CC",
+        "secondary-fixed-dim":          "#f5e87a",
+        "on-secondary-fixed":           "#1a1600",
+        "on-secondary-fixed-variant":   "#3d3a00",
+
+        // Tertiary: accent gold-green
+        "tertiary":                     "#5c5200",        // dark olive-gold
+        "on-tertiary":                  "#ffffff",
+        "tertiary-container":           "#FFF3B0",        // very pale gold
+        "on-tertiary-container":        "#1a1600",
+        "tertiary-fixed":               "#FDD200",
+        "tertiary-fixed-dim":           "#e6be00",
+        "on-tertiary-fixed":            "#000000",
+        "on-tertiary-fixed-variant":    "#3d3a00",
+
+        // Surfaces — warm off-white base (light theme)
+        "background":                   "#FFFDF0",        // very warm white
+        "on-background":                "#1a1600",        // near-black warm
+        "surface":                      "#FFFDF0",
+        "surface-bright":               "#ffffff",
+        "surface-dim":                  "#e8e5d4",
+        "surface-variant":              "#F5F0D8",        // warm cream
+        "surface-container-lowest":     "#ffffff",
+        "surface-container-low":        "#FAF7E8",        // warm light cream
+        "surface-container":            "#F5F0D8",        // cream
+        "surface-container-high":       "#EDE9CF",        // slightly darker cream
+        "surface-container-highest":    "#E5E0C4",        // warm gray-cream
+
+        // On-surface
+        "on-surface":                   "#1a1600",        // warm near-black
+        "on-surface-variant":           "#4d4900",        // dark warm gold-gray
+        "surface-tint":                 "#FDD200",        // gold tint
+
+        // Outline
+        "outline":                      "#7a7200",        // warm dark gold
+        "outline-variant":              "#ccc799",        // warm gold-cream border
+
+        // Inverse
+        "inverse-surface":              "#000000",        // black inverse bg
+        "inverse-on-surface":           "#FDD200",        // gold on black
+        "inverse-primary":              "#FDD200",        // gold inverse primary
+
+        // Error
+        "error":                        "#ba1a1a",
+        "on-error":                     "#ffffff",
+        "error-container":              "#ffdad6",
+        "on-error-container":           "#93000a",
+
+        // Status
+        "status-error":                 "#EF4444",
+        "status-success":               "#10B981",
+        "status-info":                  "#3B82F6",
+        "status-warning":               "#F59E0B",
+
+        // Risk
+        "risk-high":                    "#7F1D1D",
+        "risk-medium":                  "#B45309",
+        "risk-low":                     "#065F46",
+
+        // Brand accent shortcuts
+        "gold":                         "#FDD200",
+        "gold-dark":                    "#e6be00",
+        "gold-light":                   "#FFF8CC",
+        "brand-black":                  "#000000",
       },
       borderRadius: {
         DEFAULT: "0.125rem",

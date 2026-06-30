@@ -5,10 +5,38 @@
 @layer base {
   body {
     font-family: 'Inter', sans-serif;
-    background-color: #f7f9fb;
-    color: #191c1e;
+    background-color: #FFFDF0;
+    color: #1a1600;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Text selection — gold highlight */
+  ::selection {
+    background-color: #FDD200;
+    color: #000000;
+  }
+
+  /* Scrollbar — warm brand style */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #FAF7E8;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #ccc799;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #FDD200;
+  }
+
+  /* Focus ring — gold */
+  :focus-visible {
+    outline: 2px solid #FDD200;
+    outline-offset: 2px;
   }
 
   .material-symbols-outlined {
@@ -43,5 +71,18 @@
   /* Sidebar fixed width */
   .sidebar-width {
     width: 280px;
+  }
+
+  /* Gold shimmer — decorative accent */
+  @keyframes gold-shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+  .gold-shimmer {
+    background: linear-gradient(90deg, #FDD200 25%, #fffbe0 50%, #FDD200 75%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gold-shimmer 3s linear infinite;
   }
 }
