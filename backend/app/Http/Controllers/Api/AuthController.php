@@ -21,16 +21,17 @@ class AuthController extends Controller
     {
         // Bypass captcha during automated testing
         if (!$request->hasHeader('X-Alura-Test')) {
-            $captchaToken = $request->input('g-recaptcha-response');
+            $captchaToken = $request->input('cf-turnstile-response');
 
             if (empty($captchaToken)) {
                 return response()->json([
-                    'message' => 'Silakan centang Captcha terlebih dahulu.',
+                    'message' => 'Silakan selesaikan verifikasi Captcha terlebih dahulu.',
                 ], 422);
             }
 
-            $secret = env('RECAPTCHA_SECRET_KEY', '6LeCxAcTAAAAAGG-vFI1Tn5AaC_759n4yH2hQTYy');
-            $response = \Illuminate\Support\Facades\Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            $secret   = env('TURNSTILE_SECRET_KEY', '0x4AAAAAADuX5VNuCH2kbwYeQcl7woiVGus');
+            // $secret   = env('TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA');
+            $response = \Illuminate\Support\Facades\Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
                 'secret'   => $secret,
                 'response' => $captchaToken,
                 'remoteip' => $request->ip(),

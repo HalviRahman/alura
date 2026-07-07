@@ -74,6 +74,14 @@
             <td style="font-size:12px;font-weight:bold;text-align:right;color:#1a1600;">{{ $offer->applicant_name }}</td>
           </tr>
           <tr>
+            <td style="font-size:12px;color:#4d4900;padding:3px 0;">NIK</td>
+            <td style="font-size:12px;font-weight:bold;text-align:right;font-family:monospace;color:#1a1600;">{{ $offer->applicant_nik ?? '—' }}</td>
+          </tr>
+          <tr>
+            <td style="font-size:12px;color:#4d4900;padding:3px 0;">Alamat</td>
+            <td style="font-size:12px;font-weight:bold;text-align:right;color:#1a1600;">{{ $offer->applicant_address ?? '—' }}</td>
+          </tr>
+          <tr>
             <td style="font-size:12px;color:#4d4900;padding:3px 0;">Email</td>
             <td style="font-size:12px;text-align:right;"><a href="mailto:{{ $offer->applicant_email }}" style="color:#000;">{{ $offer->applicant_email }}</a></td>
           </tr>
@@ -98,6 +106,19 @@
         <div style="font-size:11px;color:#7a7200;font-style:italic;">— Tanpa kode referral agen —</div>
       </td></tr>
       @endif
+    </table>
+
+    <!-- PDF Attachment Note -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8CC;border:1px solid #FDD200;border-radius:4px;margin:20px 0;">
+      <tr><td style="padding:14px 20px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">📎</span>
+          <div>
+            <div style="font-size:12px;font-weight:bold;color:#1a1600;">PDF Surat Minat Aset terlampir</div>
+            <div style="font-size:11px;color:#4d4900;margin-top:2px;">File <strong>SuratMinat-{{ $offer->applicant_name }}-{{ $property->listing_id }}.pdf</strong> dapat ditemukan pada lampiran email ini.</div>
+          </div>
+        </div>
+      </td></tr>
     </table>
 
     <p style="color:#4d4900;font-size:13px;">Segera login ke Admin Console ALURA untuk meninjau dan memperbarui status penawaran ini.</p>

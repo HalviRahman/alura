@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { offersApi, getPdfUrl } from '../../services/api'
+import { offersApi } from '../../services/api'
+import PdfDownloadButton from './PdfDownloadButton'
 import type { Offer, OfferStatus } from '../../types'
 import { formatPriceFull } from '../../data/properties'
 import StatusBadge from '../ui/StatusBadge'
@@ -137,18 +138,7 @@ export default function PenawaranTab({ onOfferClick }: PenawaranTabProps) {
                       <StatusBadge status={offer.status} />
                     </td>
                     <td className="px-5 py-3" onClick={e => e.stopPropagation()}>
-                      {offer.pdf_url ? (
-                        <a
-                          href={getPdfUrl(offer.pdf_url)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-primary hover:underline font-mono text-xs font-bold"
-                        >
-                          <span className="material-symbols-outlined text-[15px]">picture_as_pdf</span>PDF
-                        </a>
-                      ) : (
-                        <span className="text-on-surface-variant/40">—</span>
-                      )}
+                      <PdfDownloadButton offer={offer} variant="compact" />
                     </td>
                   </tr>
                 ))

@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string, captchaToken?: string | null) => {
-    const res = await authApi.login({ email, password, 'g-recaptcha-response': captchaToken })
+    const res = await authApi.login({ email, password, 'cf-turnstile-response': captchaToken })
     const { token: newToken, user: newUser } = res.data
 
     localStorage.setItem('alura_token', newToken)

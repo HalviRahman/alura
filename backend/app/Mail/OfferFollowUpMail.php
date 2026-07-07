@@ -5,55 +5,47 @@ namespace App\Mail;
 
 use App\Models\Offer;
 use App\Models\Property;
-use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
 
-class OfferReceivedMail extends Mailable
+/**
+ * Email follow-up dari Manajemen ALURA ke Pemohon.
+ * Melampirkan Surat Minat Aset (PDF) sebagai bukti resmi penawaran.
+ */
+class OfferFollowUpMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public function __construct(
         public readonly Offer    $offer,
         public readonly Property $property,
-        public readonly ?User    $agent = null,
-        public readonly ?string  $pdfPath = null,
+        public readonly string   $pdfAbsPath,
     ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[ALURA] Penawaran Baru — {$this->property->listing_id} · {$this->offer->applicant_name}",
+            subject: '[ALURA] Tindak Lanjut Penawaran Aset — ' . $this->property->title,
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.offer_received',
+            view: 'emails.offer_followup',
         );
     }
 
-    /**
-     * Lampirkan PDF Surat Minat Aset ke email manajemen.
-     *
-     * @return array<Attachment>
-     */
     public function attachments(): array
     {
-        if (!$this->pdfPath || !Storage::disk('public')->exists($this->pdfPath)) {
-            return [];
-        }
-
-        $filename = "SuratMinat-{$this->offer->applicant_name}-{$this->property->listing_id}.pdf";
+        $filename = 'SuratMinat-' . $this->offer->applicant_name . '-' . $this->property->listing_id . '.pdf';
 
         return [
-            Attachment::fromStorageDisk('public', $this->pdfPath)
+            Attachment::fromPath($this->pdfAbsPath)
                 ->as($filename)
                 ->withMime('application/pdf'),
         ];

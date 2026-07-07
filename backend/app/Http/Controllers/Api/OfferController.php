@@ -8,12 +8,13 @@ use App\Http\Requests\StoreOfferRequest;
 use App\Http\Requests\UpdateOfferStatusRequest;
 use App\Http\Resources\OfferResource;
 use App\Mail\OfferConfirmationMail;
+use App\Mail\OfferFollowUpMail;
 use App\Mail\OfferReceivedMail;
 use App\Mail\OfferStatusUpdatedMail;
 use App\Models\Offer;
 use App\Models\Property;
 use App\Models\User;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\SuratMinatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -51,14 +52,16 @@ class OfferController extends Controller
         }
 
         $offer = Offer::create([
-            'property_id'     => $data['property_id'],
-            'agent_id'        => $agentId,
-            'applicant_name'  => $data['applicant_name'],
-            'applicant_email' => $data['applicant_email'],
-            'applicant_phone' => $data['applicant_phone'],
-            'offer_price'     => $data['offer_price'],
-            'referral_code'   => $agentId ? $data['referral_code'] : null,
-            'status'          => Offer::STATUS_PENDING,
+            'property_id'       => $data['property_id'],
+            'agent_id'          => $agentId,
+            'applicant_name'    => $data['applicant_name'],
+            'applicant_nik'     => $data['applicant_nik'],
+            'applicant_address' => $data['applicant_address'],
+            'applicant_email'   => $data['applicant_email'],
+            'applicant_phone'   => $data['applicant_phone'],
+            'offer_price'       => $data['offer_price'],
+            'referral_code'     => $agentId ? $data['referral_code'] : null,
+            'status'            => Offer::STATUS_PENDING,
         ]);
 
         // Generate PDF penawaran
@@ -70,18 +73,19 @@ class OfferController extends Controller
             logger()->error('PDF generation failed', ['offer_id' => $offer->id, 'error' => $e->getMessage()]);
         }
 
-        // Kirim notifikasi email ke manajemen
+        // Kirim notifikasi email ke manajemen (dengan PDF terlampir)
         try {
+            $pdfPath = $offer->pdf_path;
             $manajemen = \App\Models\User::where('role', 'manajemen')->get();
             foreach ($manajemen as $admin) {
                 Mail::to($admin->email)->queue(
-                    new OfferReceivedMail($offer, $property, $agentId ? $agent ?? null : null)
+                    new OfferReceivedMail($offer, $property, $agentId ? $agent ?? null : null, $pdfPath)
                 );
             }
             // Fallback: jika tidak ada user manajemen, kirim ke MANAJEMEN_EMAIL env
             if ($manajemen->isEmpty() && $fallbackEmail = env('MANAJEMEN_EMAIL')) {
                 Mail::to($fallbackEmail)->queue(
-                    new OfferReceivedMail($offer, $property, $agentId ? $agent ?? null : null)
+                    new OfferReceivedMail($offer, $property, $agentId ? $agent ?? null : null, $pdfPath)
                 );
             }
         } catch (\Exception $e) {
@@ -198,30 +202,160 @@ class OfferController extends Controller
 
     /**
      * GET /api/offers/{uuid}/pdf
-     * Download PDF penawaran — publik via UUID (aman karena UUID tidak tertebak).
+     * Generate PDF Surat Minat Aset.
+     * Melayani dari cache jika sudah ada, generate baru jika belum.
+     * Manajemen/Agent only (authenticated).
      */
     public function downloadPdf(Request $request, Offer $offer): Response|JsonResponse
     {
-        if (!$offer->pdf_path || !Storage::disk('public')->exists($offer->pdf_path)) {
-            return response()->json(['message' => 'PDF tidak tersedia.'], 404);
+        $offer->loadMissing(['property.assetDetail', 'agent']);
+        $property = $offer->property;
+
+        if (!$property) {
+            return response()->json(['message' => 'Data properti tidak ditemukan.'], 404);
         }
 
-        $content  = Storage::disk('public')->get($offer->pdf_path);
-        $filename = "penawaran-{$offer->uuid}-{$offer->applicant_name}.pdf";
+        // ── Serve from cache jika sudah ada ──────────────────────────────
+        $cachedRelPath = 'offers/offer-' . $offer->uuid . '.pdf';
+        $cachedAbsPath = storage_path('app/public/' . $cachedRelPath);
+
+        if (file_exists($cachedAbsPath)) {
+            $filename = 'SuratMinat-' . $offer->applicant_name . '-' . $property->listing_id . '.pdf';
+            return response(file_get_contents($cachedAbsPath), 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]);
+        }
+
+        // ── Generate baru jika belum ada cache ───────────────────────────
+        $pdfAbsPath = $this->buildAndCachePdf($offer, $property);
+
+        if (!$pdfAbsPath || !file_exists($pdfAbsPath)) {
+            return response()->json(['message' => 'Gagal generate PDF. Pastikan Microsoft Word terinstall.'], 500);
+        }
+
+        $content  = file_get_contents($pdfAbsPath);
+        $filename = 'SuratMinat-' . $offer->applicant_name . '-' . $property->listing_id . '.pdf';
 
         return response($content, 200, [
             'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
     }
 
+    /**
+     * POST /api/offers/{uuid}/send-email
+     * Manajemen only — kirim email follow-up ke pemohon dengan PDF Surat Minat terlampir.
+     */
+    public function sendFollowUpEmail(Request $request, Offer $offer): JsonResponse
+    {
+        $offer->loadMissing(['property.assetDetail', 'agent']);
+        $property = $offer->property;
+
+        if (!$property) {
+            return response()->json(['message' => 'Data properti tidak ditemukan.'], 404);
+        }
+
+        // Pastikan PDF tersedia (generate jika belum ada)
+        $pdfAbsPath = $this->buildAndCachePdf($offer, $property);
+
+        if (!$pdfAbsPath || !file_exists($pdfAbsPath)) {
+            return response()->json(['message' => 'Gagal generate PDF. Pastikan Microsoft Word terinstall.'], 500);
+        }
+
+        try {
+            Mail::to($offer->applicant_email)->send(
+                new OfferFollowUpMail($offer, $property, $pdfAbsPath)
+            );
+        } catch (\Exception $e) {
+            logger()->error('Follow-up email failed', ['offer_id' => $offer->id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'Gagal mengirim email: ' . $e->getMessage()], 500);
+        }
+
+        return response()->json([
+            'message' => 'Email Surat Minat berhasil dikirim ke ' . $offer->applicant_email,
+        ]);
+    }
+
+
     // ── Private helpers ────────────────────────────────────────────────────
 
-    private function generateOfferPdf(Offer $offer, Property $property, ?User $agent): string
+    /**
+     * Build data untuk SuratMinatService dari offer + property.
+     */
+    private function buildSuratMinatData(Offer $offer, Property $property): array
     {
-        $pdf  = Pdf::loadView('pdf.offer', compact('offer', 'property', 'agent'));
-        $path = "offers/offer-{$offer->uuid}.pdf";
-        Storage::disk('public')->put($path, $pdf->output());
-        return $path;
+        $bulan = ['','Januari','Februari','Maret','April','Mei','Juni',
+                  'Juli','Agustus','September','Oktober','November','Desember'];
+        $dt      = $offer->created_at ?? now();
+        $tanggal = $dt->format('d') . ' ' . $bulan[(int)$dt->format('n')] . ' ' . $dt->format('Y');
+
+        $hargaStr = $offer->offer_price > 0
+            ? 'Rp. ' . number_format($offer->offer_price, 0, ',', '.') . ',- terbilang ('
+              . \App\Helpers\Terbilang::convert($offer->offer_price) . ' Rupiah)'
+            : 'Tanya Detail Aset';
+
+        return [
+            'tanggal'         => $tanggal,
+            'nama'            => $offer->applicant_name,
+            'nik'             => $offer->applicant_nik ?? '',
+            'alamat_pemohon'  => $offer->applicant_address ?? '',
+            'hp'              => $offer->applicant_phone,
+            'objek'           => $property->type,
+            'alamat_properti' => $property->assetDetail?->full_address
+                                    ?? ($property->asset_detail?->full_address)
+                                    ?? ($property->city . ', ' . $property->province),
+            'listing_no'      => $property->listing_id,
+            'harga_penawaran' => $hargaStr,
+        ];
+    }
+
+    /**
+     * Generate PDF ke storage cache dan return absolute path.
+     * Jika sudah ada cached version, langsung return path-nya.
+     */
+    private function buildAndCachePdf(Offer $offer, Property $property): ?string
+    {
+        $outputDir  = storage_path('app/public/offers');
+        if (!is_dir($outputDir)) {
+            mkdir($outputDir, 0755, true);
+        }
+
+        $filename   = 'offer-' . $offer->uuid;
+        $pdfAbsPath = $outputDir . DIRECTORY_SEPARATOR . $filename . '.pdf';
+
+        // Jika sudah ada, langsung return (cache hit)
+        if (file_exists($pdfAbsPath)) {
+            return $pdfAbsPath;
+        }
+
+        // Generate baru
+        $data    = $this->buildSuratMinatData($offer, $property);
+        $service = new SuratMinatService();
+        $result  = $service->generate($data, $outputDir, $filename);
+
+        if ($result && file_exists($result)) {
+            // Simpan path ke DB untuk referensi
+            $offer->updateQuietly(['pdf_path' => 'offers/' . $filename . '.pdf']);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Generate PDF Surat Minat Aset dari template Word asli.
+     * Dipanggil saat offer pertama kali dibuat (store()).
+     *
+     * @return string|null  Path relatif ke storage/app/public, atau null jika gagal
+     */
+    private function generateOfferPdf(Offer $offer, Property $property, ?User $agent): ?string
+    {
+        $pdfAbsPath = $this->buildAndCachePdf($offer, $property);
+
+        if (!$pdfAbsPath) {
+            return null;
+        }
+
+        return 'offers/' . basename($pdfAbsPath);
     }
 }

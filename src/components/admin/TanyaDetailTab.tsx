@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { offersApi, getPdfUrl } from '../../services/api'
+import { offersApi } from '../../services/api'
 import type { Offer, OfferStatus } from '../../types'
 import { formatPriceFull } from '../../data/properties'
 import StatusBadge from '../ui/StatusBadge'

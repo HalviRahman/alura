@@ -1,10 +1,10 @@
 import React from 'react'
 import type { Offer } from '../../types'
 import type { DashboardData, SpkAlert } from '../../services/api'
-import { getPdfUrl } from '../../services/api'
 import { formatPriceFull } from '../../data/properties'
 import StatusBadge from '../ui/StatusBadge'
 import SpkCard from './SpkCard'
+import PdfDownloadButton from './PdfDownloadButton'
 
 interface CommandCenterTabProps {
   dashboardData: DashboardData
@@ -133,18 +133,7 @@ export default function CommandCenterTab({
                       <StatusBadge status={offer.status} />
                     </td>
                     <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
-                      {offer.pdf_url && offer.offer_price > 0 ? (
-                        <a
-                          href={getPdfUrl(offer.pdf_url)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-primary hover:underline font-mono text-xs font-bold"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>Unduh
-                        </a>
-                      ) : (
-                        <span className="text-on-surface-variant/40">—</span>
-                      )}
+                      <PdfDownloadButton offer={offer} variant="compact" />
                     </td>
                   </tr>
                 ))

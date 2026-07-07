@@ -32,6 +32,8 @@ class Offer extends Model
         'property_id',
         'agent_id',
         'applicant_name',
+        'applicant_nik',
+        'applicant_address',
         'applicant_email',
         'applicant_phone',
         'offer_price',

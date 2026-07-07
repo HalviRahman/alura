@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { formatPriceFull } from '../../data/properties'
-import { offersApi, getPdfUrl } from '../../services/api'
+import { offersApi } from '../../services/api'
 import type { Property } from '../../types'
 
 interface OfferModalProps {
@@ -11,15 +11,15 @@ interface OfferModalProps {
 
 export default function OfferModal({ property, refCode, onClose }: OfferModalProps) {
   const [name, setName] = useState('')
+  const [nik, setNik] = useState('')
+  const [address, setAddress] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [offerPriceRaw, setOfferPriceRaw] = useState('')
   
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
-
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Only allow numbers
     const val = e.target.value.replace(/\D/g, '')
@@ -48,13 +48,14 @@ export default function OfferModal({ property, refCode, onClose }: OfferModalPro
       const res = await offersApi.submit({
         property_id: property.id,
         applicant_name: name,
+        applicant_nik: nik,
+        applicant_address: address,
         applicant_email: email,
         applicant_phone: phone,
         offer_price: price,
         referral_code: refCode || undefined,
       })
 
-      setPdfUrl(res.data.offer.pdf_url)
       setSubmitted(true)
     } catch (err: any) {
       const errMsg = err.response?.data?.message || 'Gagal mengirim penawaran. Pastikan semua data benar.'
@@ -69,7 +70,7 @@ export default function OfferModal({ property, refCode, onClose }: OfferModalPro
       className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-surface w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="bg-surface w-full max-w-lg rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in duration-200" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-outline-variant">
           <h2 className="font-headline font-semibold text-2xl text-primary">Formulir Penawaran</h2>
@@ -82,7 +83,8 @@ export default function OfferModal({ property, refCode, onClose }: OfferModalPro
           </button>
         </div>
 
-        {/* Body */}
+        {/* Body — scrollable */}
+        <div className="overflow-y-auto flex-1">
         {submitted ? (
           <div className="p-8 text-center space-y-4">
             <div className="w-16 h-16 bg-status-success/10 rounded-full flex items-center justify-center mx-auto">
@@ -90,19 +92,8 @@ export default function OfferModal({ property, refCode, onClose }: OfferModalPro
             </div>
             <h3 className="font-headline font-semibold text-xl text-primary">Penawaran Terkirim!</h3>
             <p className="font-body text-sm text-on-surface-variant">
-              Dokumen penawaran resmi Anda berhasil dibuat. Tim ALURA akan menghubungi Anda dalam waktu maksimal 2x24 jam kerja.
+              Penawaran resmi Anda telah diterima. Tim ALURA akan menghubungi Anda dalam waktu maksimal 2×24 jam kerja setelah verifikasi data.
             </p>
-            {pdfUrl && (
-              <a
-                href={getPdfUrl(pdfUrl)}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 bg-secondary text-on-secondary font-mono text-xs font-bold px-5 py-2.5 rounded-lg hover:bg-opacity-95 transition-all mt-2"
-              >
-                <span className="material-symbols-outlined text-[18px]">download_for_offline</span>
-                Unduh PDF Penawaran
-              </a>
-            )}
             <div className="pt-4 border-t border-outline-variant">
               <button
                 onClick={onClose}
@@ -140,6 +131,41 @@ export default function OfferModal({ property, refCode, onClose }: OfferModalPro
                   required
                   className="w-full bg-white border border-outline rounded-lg p-3 font-body text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none text-on-surface"
                   placeholder="Masukkan nama lengkap"
+                />
+              </div>
+
+              {/* NIK */}
+              <div>
+                <label className="block font-mono text-[10px] text-on-surface-variant uppercase tracking-wider mb-1.5">
+                  NIK (16 Digit)
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={nik}
+                  onChange={e => setNik(e.target.value.replace(/\D/g, '').slice(0, 16))}
+                  required
+                  maxLength={16}
+                  className="w-full bg-white border border-outline rounded-lg p-3 font-mono text-sm tracking-widest focus:ring-1 focus:ring-primary focus:border-primary outline-none text-on-surface"
+                  placeholder="16 digit angka"
+                />
+                {nik.length > 0 && nik.length < 16 && (
+                  <p className="mt-1 text-xs text-red-500 font-mono">{16 - nik.length} digit lagi</p>
+                )}
+              </div>
+
+              {/* Alamat */}
+              <div>
+                <label className="block font-mono text-[10px] text-on-surface-variant uppercase tracking-wider mb-1.5">
+                  Alamat Sesuai KTP
+                </label>
+                <textarea
+                  value={address}
+                  onChange={e => setAddress(e.target.value)}
+                  required
+                  rows={3}
+                  className="w-full bg-white border border-outline rounded-lg p-3 font-body text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none text-on-surface resize-none"
+                  placeholder="Jalan, Kelurahan, Kecamatan, Kota, Provinsi"
                 />
               </div>
 
@@ -238,7 +264,7 @@ export default function OfferModal({ property, refCode, onClose }: OfferModalPro
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || nik.length !== 16}
                 id="submit-offer-btn"
                 className="w-full bg-status-success text-white font-body font-bold py-4 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
               >
@@ -255,6 +281,7 @@ export default function OfferModal({ property, refCode, onClose }: OfferModalPro
             </div>
           </form>
         )}
+        </div>
       </div>
     </div>
   )

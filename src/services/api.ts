@@ -51,7 +51,7 @@ export function getPdfUrl(url: string | null | undefined): string {
 export interface LoginPayload {
   email: string
   password: string
-  'g-recaptcha-response'?: string | null
+  'cf-turnstile-response'?: string | null
 }
 
 export interface LoginResponse {
@@ -107,6 +107,8 @@ export const propertiesApi = {
 export interface SubmitOfferPayload {
   property_id: number
   applicant_name: string
+  applicant_nik?: string
+  applicant_address?: string
   applicant_email: string
   applicant_phone: string
   offer_price: number
@@ -125,6 +127,9 @@ export const offersApi = {
 
   downloadPdf: (uuid: string) =>
     api.get(`/offers/${uuid}/pdf`, { responseType: 'blob' }),
+
+  sendEmail: (uuid: string) =>
+    api.post<{ message: string }>(`/offers/${uuid}/send-email`),
 }
 
 // ─── Agent ─────────────────────────────────────────────────────────────────

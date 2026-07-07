@@ -78,6 +78,8 @@ export interface Offer {
     city: string
   } | null
   applicant_name: string
+  applicant_nik: string | null
+  applicant_address: string | null
   applicant_email: string
   applicant_phone: string
   offer_price: number

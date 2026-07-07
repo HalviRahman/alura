@@ -33,7 +33,6 @@ Route::prefix('auth')->group(function () {
 Route::middleware('throttle:60,1')->group(function () {
     // Submit offer — public, no auth
     Route::post('offers', [OfferController::class, 'store']);
-    Route::get('offers/{offer}/pdf', [OfferController::class, 'downloadPdf']);
 });
 
 // ── Property listing: public tapi optional auth (manajemen bisa lihat unpublished) ─
@@ -54,9 +53,10 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::get('stats', [AgentController::class, 'stats']);
     });
 
-    // Offer list + PDF — agent sees only their own referral offers
+    // Offer list + PDF download — agent sees only their own referral offers
     Route::middleware('role:agent,manajemen')->group(function () {
         Route::get('offers', [OfferController::class, 'index']);
+        Route::get('offers/{offer}/pdf', [OfferController::class, 'downloadPdf']);
     });
 
     // ── Manajemen Only ─────────────────────────────────────────────────────
@@ -70,6 +70,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
         // Offer status management
         Route::put('offers/{offer}/status', [OfferController::class, 'updateStatus']);
+        Route::post('offers/{offer}/send-email', [OfferController::class, 'sendFollowUpEmail']);
 
         // Admin dashboard
         Route::prefix('admin')->group(function () {

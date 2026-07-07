@@ -1,113 +1,100 @@
-import { useState, useEffect, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import type { UserRole } from '../types'
-import logoImg from '../assets/logo.png'
+import { useState, useEffect, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import type { UserRole } from "../types";
+import logoImg from "../assets/logo.png";
 
 // Redirect target per role
 const ROLE_REDIRECT: Record<UserRole, string> = {
-  manajemen: '/admin',
-  agent: '/agent/dashboard',
-  user: '/',
-}
+  manajemen: "/admin",
+  agent: "/agent/dashboard",
+  user: "/",
+};
 
 export default function LoginPage() {
-  const navigate      = useNavigate()
-  const { login, isAuthenticated, user } = useAuth()
+  const navigate = useNavigate();
+  const { login, isAuthenticated, user } = useAuth();
 
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [showPass, setShowPass] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError]       = useState<string | null>(null)
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const renderCaptcha = () => {
-      const grecaptcha = (window as any).grecaptcha
-      if (grecaptcha && document.getElementById('recaptcha-container')) {
-        try {
-          grecaptcha.render('recaptcha-container', {
-            sitekey: import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeCxAcTAAAAAMx7HCoDu_7bA9NGuVdugc26QEB6',
-            callback: (token: string) => setCaptchaToken(token),
-            'expired-callback': () => setCaptchaToken(null),
-          })
-        } catch (e) {
-          try {
-            grecaptcha.reset()
-          } catch (err) {}
-        }
-      }
-    }
+    // Daftarkan callback global untuk Cloudflare Turnstile
+    (window as any).onTurnstileSuccess = (token: string) =>
+      setCaptchaToken(token);
+    (window as any).onTurnstileExpired = () => setCaptchaToken(null);
 
-    (window as any).onRecaptchaLoad = () => {
-      renderCaptcha()
-    }
-
-    if (!(window as any).grecaptcha) {
-      const script = document.createElement('script')
-      script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit'
-      script.async = true
-      script.defer = true
-      document.body.appendChild(script)
-    } else {
-      renderCaptcha()
+    // Muat Turnstile script jika belum ada
+    const TURNSTILE_SCRIPT_ID = "cf-turnstile-script";
+    if (!document.getElementById(TURNSTILE_SCRIPT_ID)) {
+      const script = document.createElement("script");
+      script.id = TURNSTILE_SCRIPT_ID;
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
     }
 
     return () => {
-      delete (window as any).onRecaptchaLoad
-    }
-  }, [])
+      delete (window as any).onTurnstileSuccess;
+      delete (window as any).onTurnstileExpired;
+    };
+  }, []);
 
   // Kalau sudah login, redirect langsung secara aman via useEffect
   useEffect(() => {
     if (isAuthenticated && user) {
-      const target = ROLE_REDIRECT[user.role]
+      const target = ROLE_REDIRECT[user.role];
       if (target) {
-        navigate(target, { replace: true })
+        navigate(target, { replace: true });
       } else {
         // Proteksi kokoh terhadap sesi usang/korup di browser
-        localStorage.removeItem('alura_token')
-        localStorage.removeItem('alura_user')
-        window.location.reload()
+        localStorage.removeItem("alura_token");
+        localStorage.removeItem("alura_user");
+        window.location.reload();
       }
     }
-  }, [isAuthenticated, user, navigate])
+  }, [isAuthenticated, user, navigate]);
 
   if (isAuthenticated && user && ROLE_REDIRECT[user.role]) {
-    return null
+    return null;
   }
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!email || !password) return
+    e.preventDefault();
+    if (!email || !password) return;
 
     if (!captchaToken) {
-      setError('Silakan centang Captcha terlebih dahulu.')
-      return
+      setError("Silakan centang Captcha terlebih dahulu.");
+      return;
     }
 
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
     try {
-      const { user: loggedUser } = await login(email, password, captchaToken)
-      navigate(ROLE_REDIRECT[loggedUser.role], { replace: true })
+      const { user: loggedUser } = await login(email, password, captchaToken);
+      navigate(ROLE_REDIRECT[loggedUser.role], { replace: true });
     } catch (err: unknown) {
-      if ((window as any).grecaptcha) {
+      // Reset Cloudflare Turnstile setelah login gagal
+      if ((window as any).turnstile) {
         try {
-          (window as any).grecaptcha.reset()
+          (window as any).turnstile.reset();
         } catch (e) {}
       }
-      setCaptchaToken(null)
+      setCaptchaToken(null);
       const msg =
-        (err as { response?: { data?: { message?: string } } })
-          ?.response?.data?.message ?? 'Login gagal. Periksa email dan password Anda.'
-      setError(msg)
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? "Login gagal. Periksa email dan password Anda.";
+      setError(msg);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -115,7 +102,11 @@ export default function LoginPage() {
       <header className="bg-surface border-b border-outline-variant h-16 flex items-center px-6">
         <div className="max-w-container-max mx-auto w-full flex items-center">
           <div className="flex items-center">
-            <img src={logoImg} className="h-9 w-auto object-contain" alt="ALURA Logo" />
+            <img
+              src={logoImg}
+              className="h-9 w-auto object-contain"
+              alt="ALURA Logo"
+            />
           </div>
         </div>
       </header>
@@ -126,14 +117,23 @@ export default function LoginPage() {
           {/* Badge */}
           <div className="flex justify-center mb-8">
             <div className="inline-flex items-center gap-2 bg-primary/5 border border-primary/10 px-4 py-1.5 rounded-full">
-              <span className="material-symbols-outlined text-primary text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-              <span className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold">Institutional Property Marketplace</span>
+              <span
+                className="material-symbols-outlined text-primary text-[14px]"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                verified
+              </span>
+              <span className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold">
+                Institutional Property Marketplace
+              </span>
             </div>
           </div>
 
           {/* Heading */}
           <h1 className="font-headline font-bold text-4xl text-primary mb-2 text-center leading-tight tracking-tight">
-            Selamat Datang di<br />ALURA
+            Selamat Datang di
+            <br />
+            ALURA
           </h1>
           <p className="font-body text-sm text-on-surface-variant text-center mb-8">
             Masuk untuk mengakses platform properti institusional.
@@ -145,14 +145,22 @@ export default function LoginPage() {
               {/* Error */}
               {error && (
                 <div className="mb-5 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
-                  <span className="material-symbols-outlined text-red-500 text-[20px] mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+                  <span
+                    className="material-symbols-outlined text-red-500 text-[20px] mt-0.5"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    error
+                  </span>
                   <p className="font-body text-sm text-red-700">{error}</p>
                 </div>
               )}
 
               {/* Email */}
               <div className="mb-5">
-                <label htmlFor="email" className="block font-mono text-[11px] text-on-surface-variant uppercase tracking-widest mb-2">
+                <label
+                  htmlFor="email"
+                  className="block font-mono text-[11px] text-on-surface-variant uppercase tracking-widest mb-2"
+                >
                   Email
                 </label>
                 <input
@@ -160,7 +168,7 @@ export default function LoginPage() {
                   type="email"
                   autoComplete="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="nama@alura.id"
                   required
                   className="w-full border border-outline-variant rounded-xl px-4 py-3 font-body text-sm bg-background text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
@@ -169,36 +177,51 @@ export default function LoginPage() {
 
               {/* Password */}
               <div className="mb-6">
-                <label htmlFor="password" className="block font-mono text-[11px] text-on-surface-variant uppercase tracking-widest mb-2">
+                <label
+                  htmlFor="password"
+                  className="block font-mono text-[11px] text-on-surface-variant uppercase tracking-widest mb-2"
+                >
                   Password
                 </label>
                 <div className="relative">
                   <input
                     id="password"
-                    type={showPass ? 'text' : 'password'}
+                    type={showPass ? "text" : "password"}
                     autoComplete="current-password"
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
                     className="w-full border border-outline-variant rounded-xl px-4 py-3 pr-12 font-body text-sm bg-background text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPass(v => !v)}
+                    onClick={() => setShowPass((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors"
-                    aria-label={showPass ? 'Sembunyikan password' : 'Tampilkan password'}
+                    aria-label={
+                      showPass ? "Sembunyikan password" : "Tampilkan password"
+                    }
                   >
                     <span className="material-symbols-outlined text-[20px]">
-                      {showPass ? 'visibility_off' : 'visibility'}
+                      {showPass ? "visibility_off" : "visibility"}
                     </span>
                   </button>
                 </div>
               </div>
 
-              {/* Google reCAPTCHA */}
+              {/* Cloudflare Turnstile */}
               <div className="mb-5 flex justify-center">
-                <div id="recaptcha-container"></div>
+                <div
+                  className="cf-turnstile"
+                  data-sitekey={
+                    import.meta.env.VITE_TURNSTILE_SITE_KEY ||
+                    // "1x00000000000000000000AA"
+                    "0x4AAAAAADuX5U4GBiO9gKnR"
+                  }
+                  data-callback="onTurnstileSuccess"
+                  data-expired-callback="onTurnstileExpired"
+                  data-theme="light"
+                ></div>
               </div>
 
               {/* Submit */}
@@ -210,13 +233,17 @@ export default function LoginPage() {
               >
                 {isLoading ? (
                   <>
-                    <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                    <span className="material-symbols-outlined animate-spin text-[20px]">
+                      progress_activity
+                    </span>
                     Masuk...
                   </>
                 ) : (
                   <>
                     Masuk
-                    <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                    <span className="material-symbols-outlined text-[20px]">
+                      arrow_forward
+                    </span>
                   </>
                 )}
               </button>
@@ -225,21 +252,39 @@ export default function LoginPage() {
 
           {/* Demo accounts hint */}
           <div className="mt-6 p-4 bg-surface-container-highest border border-outline-variant rounded-xl">
-            <p className="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest text-center mb-3">Akun Demo</p>
+            <p className="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest text-center mb-3">
+              Akun Demo
+            </p>
             <div className="space-y-1.5">
               {[
-                { role: 'Manajemen', email: 'admin@alura.id', pass: 'Admin@12345' },
-                { role: 'Agent', email: 'agent@alura.id', pass: 'Agent@12345' },
-                { role: 'User Publik', email: 'user@alura.id', pass: 'User@12345' },
-              ].map(acc => (
+                {
+                  role: "Manajemen",
+                  email: "admin@alura.id",
+                  pass: "Admin@12345",
+                },
+                { role: "Agent", email: "agent@alura.id", pass: "Agent@12345" },
+                {
+                  role: "User Publik",
+                  email: "user@alura.id",
+                  pass: "User@12345",
+                },
+              ].map((acc) => (
                 <button
                   key={acc.email}
                   type="button"
-                  onClick={() => { setEmail(acc.email); setPassword(acc.pass); setError(null) }}
+                  onClick={() => {
+                    setEmail(acc.email);
+                    setPassword(acc.pass);
+                    setError(null);
+                  }}
                   className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-surface-container-high transition-colors group"
                 >
-                  <span className="font-mono text-[10px] text-on-surface-variant group-hover:text-primary transition-colors">{acc.role}</span>
-                  <span className="font-mono text-[10px] text-on-surface-variant/60">{acc.email}</span>
+                  <span className="font-mono text-[10px] text-on-surface-variant group-hover:text-primary transition-colors">
+                    {acc.role}
+                  </span>
+                  <span className="font-mono text-[10px] text-on-surface-variant/60">
+                    {acc.email}
+                  </span>
                 </button>
               ))}
             </div>
@@ -248,13 +293,23 @@ export default function LoginPage() {
           {/* Trust badges */}
           <div className="mt-6 flex flex-wrap justify-center gap-4">
             {[
-              { icon: 'lock', label: 'SSL 256-bit' },
-              { icon: 'verified_user', label: 'Terverifikasi OJK' },
-              { icon: 'gpp_good', label: 'Data Terlindungi' },
-            ].map(b => (
-              <div key={b.label} className="flex items-center gap-1.5 text-on-surface-variant">
-                <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>{b.icon}</span>
-                <span className="font-mono text-[9px] uppercase tracking-wider">{b.label}</span>
+              { icon: "lock", label: "SSL 256-bit" },
+              { icon: "verified_user", label: "Terverifikasi OJK" },
+              { icon: "gpp_good", label: "Data Terlindungi" },
+            ].map((b) => (
+              <div
+                key={b.label}
+                className="flex items-center gap-1.5 text-on-surface-variant"
+              >
+                <span
+                  className="material-symbols-outlined text-[14px]"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  {b.icon}
+                </span>
+                <span className="font-mono text-[9px] uppercase tracking-wider">
+                  {b.label}
+                </span>
               </div>
             ))}
           </div>
@@ -268,14 +323,20 @@ export default function LoginPage() {
             © 2024 ALURA Institutional Assets. All Rights Reserved.
           </p>
           <div className="flex gap-5">
-            {['Legal Disclaimer', 'Privacy Policy', 'Contact Support'].map(link => (
-              <a key={link} href="#" className="font-mono text-[10px] text-on-surface-variant hover:text-primary transition-colors">
-                {link}
-              </a>
-            ))}
+            {["Legal Disclaimer", "Privacy Policy", "Contact Support"].map(
+              (link) => (
+                <a
+                  key={link}
+                  href="#"
+                  className="font-mono text-[10px] text-on-surface-variant hover:text-primary transition-colors"
+                >
+                  {link}
+                </a>
+              ),
+            )}
           </div>
         </div>
       </footer>
     </div>
-  )
+  );
 }
