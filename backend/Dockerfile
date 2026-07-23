@@ -1,7 +1,7 @@
 FROM php:8.3-fpm-alpine
 
 # Install system dependencies & PHP extensions required by Laravel, Dompdf, PHPWord
-RUN apk add --no-config \
+RUN apk add --no-cache \
     freetype-dev \
     libjpeg-turbo-dev \
     libpng-dev \
@@ -11,7 +11,6 @@ RUN apk add --no-config \
     sqlite-dev \
     oniguruma-dev \
     curl \
-    icui18n \
     icu-dev
 
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -34,12 +33,15 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . .
 
-# Set permissions for Laravel storage & cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Copy .env.example to .env if .env doesn't exist
+RUN if [ ! -f .env ]; then cp .env.example .env; fi
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Set permissions for Laravel storage & cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 9000
 CMD ["php-fpm"]
