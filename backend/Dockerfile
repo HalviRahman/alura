@@ -1,7 +1,10 @@
 FROM php:8.3-fpm-alpine
 
-# Install system dependencies & PHP extensions required by Laravel, Dompdf, PHPWord
+# Install build dependencies & system libraries required by Alpine
 RUN apk add --no-cache \
+    curl \
+    git \
+    build-base \
     freetype-dev \
     libjpeg-turbo-dev \
     libpng-dev \
@@ -10,18 +13,18 @@ RUN apk add --no-cache \
     unzip \
     sqlite-dev \
     oniguruma-dev \
-    curl \
-    icu-dev
+    icu-dev \
+    icu-libs
 
+# Configure and install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure intl \
     && docker-php-ext-install -j$(nproc) \
-        pdo \
         pdo_mysql \
         pdo_sqlite \
         gd \
         zip \
         bcmath \
-        mbstring \
         intl \
         opcache
 
@@ -36,7 +39,7 @@ COPY . .
 # Copy .env.example to .env if .env doesn't exist
 RUN if [ ! -f .env ]; then cp .env.example .env; fi
 
-# Install dependencies
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Set permissions for Laravel storage & cache
