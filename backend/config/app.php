@@ -123,4 +123,12 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Third-party Service Keys
+    |--------------------------------------------------------------------------
+    */
+
+    'turnstile_secret_key' => env('TURNSTILE_SECRET_KEY', ''),
+
 ];

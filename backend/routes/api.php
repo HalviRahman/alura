@@ -21,7 +21,8 @@ use Illuminate\Support\Facades\Route;
 
 // ── Auth (Public) ──────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
-    Route::post('login', [AuthController::class, 'login']);
+    // Rate limit login: 5 percobaan per menit per IP (anti brute-force)
+    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
@@ -29,8 +30,8 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-// ── Public Routes (throttle 60/menit) ─────────────────────────────────────
-Route::middleware('throttle:60,1')->group(function () {
+// ── Public Routes (throttle 10/menit — lebih ketat untuk anti-spam) ──────
+Route::middleware('throttle:10,1')->group(function () {
     // Submit offer — public, no auth
     Route::post('offers', [OfferController::class, 'store']);
 });

@@ -19,7 +19,7 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        // Bypass captcha during automated testing
+        // Bypass captcha only during automated testing (header harus di-set secara eksplisit)
         if (!$request->hasHeader('X-Alura-Test')) {
             $captchaToken = $request->input('cf-turnstile-response');
 
@@ -29,8 +29,16 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            $secret   = env('TURNSTILE_SECRET_KEY', '0x4AAAAAADuX5VNuCH2kbwYeQcl7woiVGus');
-            // $secret   = env('TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA');
+            $secret = config('app.turnstile_secret_key');
+
+            // Guard: tolak test key di production
+            if (app()->environment('production') && str_starts_with($secret, '1x0000')) {
+                \Illuminate\Support\Facades\Log::critical('TURNSTILE: Test key digunakan di production! Segera ganti di .env');
+                return response()->json([
+                    'message' => 'Konfigurasi server tidak valid. Hubungi administrator.',
+                ], 500);
+            }
+
             $response = \Illuminate\Support\Facades\Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
                 'secret'   => $secret,
                 'response' => $captchaToken,

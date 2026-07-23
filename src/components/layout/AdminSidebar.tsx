@@ -1,83 +1,94 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
-import logoImg from '../../assets/logo.png'
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import logoImg from "../../assets/logo.png";
+import arebiLogo from "../../assets/arebi-logo.png";
 
 interface AdminSidebarProps {
-  onAddAsset?: () => void
+  onAddAsset?: () => void;
 }
 
 type SidebarTab =
-  | 'command'
-  | 'analytics'
-  | 'users'
-  | 'spk'
-  | 'reports'
-  | 'map'
-  | 'properties'
-  | 'offers'
-  | 'tanya_detail'
+  | "command"
+  | "analytics"
+  | "users"
+  | "spk"
+  | "reports"
+  | "map"
+  | "properties"
+  | "offers"
+  | "tanya_detail";
 
 const navItems: Array<{ icon: string; label: string; tab: SidebarTab }> = [
-  { icon: 'dashboard',     label: 'Command Center',  tab: 'command'    },
-  { icon: 'insights',      label: 'Analytics',       tab: 'analytics'  },
-  { icon: 'group',         label: 'User Management', tab: 'users'      },
-  { icon: 'timer',         label: 'SPK Tracker',     tab: 'spk'        },
-  { icon: 'description',   label: 'Reports',         tab: 'reports'    },
-  { icon: 'map',           label: 'Peta Distribusi',  tab: 'map'        },
-]
+  { icon: "dashboard", label: "Command Center", tab: "command" },
+  { icon: "insights", label: "Analytics", tab: "analytics" },
+  { icon: "group", label: "User Management", tab: "users" },
+  { icon: "timer", label: "SPK Tracker", tab: "spk" },
+  { icon: "description", label: "Reports", tab: "reports" },
+  { icon: "map", label: "Peta Distribusi", tab: "map" },
+];
 
 const assetItems: Array<{ icon: string; label: string; tab: SidebarTab }> = [
-  { icon: 'home_work',     label: 'Aset Properti',       tab: 'properties' },
-  { icon: 'receipt_long',  label: 'Penawaran',           tab: 'offers'     },
-  { icon: 'contact_support', label: 'Tanya Detail Asset', tab: 'tanya_detail' },
-]
+  { icon: "home_work", label: "Aset Properti", tab: "properties" },
+  { icon: "receipt_long", label: "Penawaran", tab: "offers" },
+  { icon: "contact_support", label: "Tanya Detail Asset", tab: "tanya_detail" },
+];
 
 export default function AdminSidebar({ onAddAsset }: AdminSidebarProps) {
-  const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const { logout } = useAuth()
-  const [open, setOpen] = useState(false)
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { logout } = useAuth();
+  const [open, setOpen] = useState(false);
 
-  const activeTab = (searchParams.get('tab') as SidebarTab) || 'command'
+  const activeTab = (searchParams.get("tab") as SidebarTab) || "command";
 
   // Close drawer on route/tab change (mobile UX)
-  useEffect(() => { setOpen(false) }, [activeTab])
+  useEffect(() => {
+    setOpen(false);
+  }, [activeTab]);
 
   // Close drawer on outside ESC key
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [])
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
 
   // Prevent body scroll when open on mobile
   useEffect(() => {
-    if (open) document.body.style.overflow = 'hidden'
-    else document.body.style.overflow = ''
-    return () => { document.body.style.overflow = '' }
-  }, [open])
+    if (open) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   const handleNavClick = (tab: SidebarTab) => {
-    setSearchParams({ tab })
-    setOpen(false)
-  }
+    setSearchParams({ tab });
+    setOpen(false);
+  };
 
   const handleLogout = async () => {
-    await logout()
-    navigate('/', { replace: true })
-  }
+    await logout();
+    navigate("/", { replace: true });
+  };
 
-  const NavButton = ({ item }: { item: { icon: string; label: string; tab: SidebarTab } }) => {
-    const isActive = activeTab === item.tab
+  const NavButton = ({
+    item,
+  }: {
+    item: { icon: string; label: string; tab: SidebarTab };
+  }) => {
+    const isActive = activeTab === item.tab;
     return (
       <button
         key={item.tab}
         onClick={() => handleNavClick(item.tab)}
         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all group text-left ${
           isActive
-            ? 'bg-secondary-container text-on-secondary-container font-semibold'
-            : 'text-on-surface-variant hover:bg-surface-container-high'
+            ? "bg-secondary-container text-on-secondary-container font-semibold"
+            : "text-on-surface-variant hover:bg-surface-container-high"
         }`}
       >
         <span
@@ -86,21 +97,43 @@ export default function AdminSidebar({ onAddAsset }: AdminSidebarProps) {
         >
           {item.icon}
         </span>
-        <span className="font-mono text-xs tracking-widest uppercase">{item.label}</span>
+        <span className="font-mono text-xs tracking-widest uppercase">
+          {item.label}
+        </span>
         {isActive && (
           <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
         )}
       </button>
-    )
-  }
+    );
+  };
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Brand */}
       <div className="mb-6 px-1 flex items-center justify-between">
         <div>
-          <img src={logoImg} className="h-8 w-auto object-contain" alt="ALURA Logo" />
-          <p className="font-mono text-[10px] text-on-surface-variant tracking-wider uppercase mt-1">Admin Console</p>
+          <div className="flex items-center gap-2.5">
+            <img
+              src={logoImg}
+              className="h-10 w-auto object-contain"
+              alt="ALURA Logo"
+            />
+            <span className="w-px h-6 bg-outline-variant" />
+            <div className="flex flex-col items-center">
+              <span className="font-mono text-[6px] font-bold text-black uppercase tracking-widest leading-none mb-0.5">
+                Member of
+              </span>
+              <img
+                src={arebiLogo}
+                className="h-10 w-auto object-contain"
+                alt="AREBI"
+                title="Anggota AREBI"
+              />
+            </div>
+          </div>
+          <p className="font-mono text-[10px] text-on-surface-variant tracking-wider uppercase mt-1">
+            Admin Console
+          </p>
         </div>
         {/* Close button — mobile only */}
         <button
@@ -114,7 +147,10 @@ export default function AdminSidebar({ onAddAsset }: AdminSidebarProps) {
       {/* Add New Asset CTA */}
       {onAddAsset && (
         <button
-          onClick={() => { onAddAsset(); setOpen(false) }}
+          onClick={() => {
+            onAddAsset();
+            setOpen(false);
+          }}
           className="mb-6 bg-primary text-on-primary font-body font-semibold text-sm py-3 px-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm"
         >
           <span className="material-symbols-outlined text-[20px]">add</span>
@@ -124,15 +160,21 @@ export default function AdminSidebar({ onAddAsset }: AdminSidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto">
-        {navItems.map(item => <NavButton key={item.tab} item={item} />)}
+        {navItems.map((item) => (
+          <NavButton key={item.tab} item={item} />
+        ))}
       </nav>
 
       {/* Divider + Asset Views */}
       <div className="my-3 px-4">
-        <p className="font-mono text-[9px] text-on-surface-variant/50 uppercase tracking-widest">Asset Views</p>
+        <p className="font-mono text-[9px] text-on-surface-variant/50 uppercase tracking-widest">
+          Asset Views
+        </p>
       </div>
       <nav className="space-y-0.5 mb-4">
-        {assetItems.map(item => <NavButton key={item.tab} item={item} />)}
+        {assetItems.map((item) => (
+          <NavButton key={item.tab} item={item} />
+        ))}
       </nav>
 
       {/* Logout */}
@@ -142,11 +184,13 @@ export default function AdminSidebar({ onAddAsset }: AdminSidebarProps) {
           className="w-full flex items-center gap-3 px-4 py-3 text-status-error hover:bg-red-50 rounded-lg transition-all"
         >
           <span className="material-symbols-outlined text-[20px]">logout</span>
-          <span className="font-mono text-xs tracking-widest uppercase">Logout</span>
+          <span className="font-mono text-xs tracking-widest uppercase">
+            Logout
+          </span>
         </button>
       </div>
     </div>
-  )
+  );
 
   return (
     <>
@@ -165,8 +209,20 @@ export default function AdminSidebar({ onAddAsset }: AdminSidebarProps) {
           <span className="material-symbols-outlined text-[24px]">menu</span>
         </button>
         <div className="flex-1 min-w-0 flex items-center gap-2">
-          <img src={logoImg} className="h-6 w-auto object-contain" alt="ALURA Logo" />
-          <span className="font-mono text-[10px] text-on-surface-variant ml-1 uppercase tracking-wider hidden sm:inline">Admin Console</span>
+          <img
+            src={logoImg}
+            className="h-6 w-auto object-contain"
+            alt="ALURA Logo"
+          />
+          <span className="w-px h-4 bg-outline-variant" />
+          <img
+            src={arebiLogo}
+            className="h-6 w-auto object-contain"
+            alt="AREBI"
+          />
+          <span className="font-mono text-[10px] text-on-surface-variant ml-1 uppercase tracking-wider hidden sm:inline">
+            Admin Console
+          </span>
         </div>
         {onAddAsset && (
           <button
@@ -190,11 +246,11 @@ export default function AdminSidebar({ onAddAsset }: AdminSidebarProps) {
       {/* ── Mobile: drawer ── */}
       <aside
         className={`lg:hidden fixed left-0 top-0 h-full w-[280px] bg-surface-container-low border-r border-outline-variant flex flex-col p-4 z-50 transition-transform duration-300 ease-in-out ${
-          open ? 'translate-x-0' : '-translate-x-full'
+          open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <SidebarContent />
       </aside>
     </>
-  )
+  );
 }

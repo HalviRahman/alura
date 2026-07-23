@@ -20,8 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => CheckRole::class,
         ]);
 
-        // Trust all proxies (for HTTPS behind Nginx/Apache)
-        $middleware->trustProxies(at: '*');
+        // Trust only known proxies (Nginx/load balancer IP). Set TRUSTED_PROXIES=* hanya jika di balik Cloudflare.
+        $middleware->trustProxies(
+            at: env('TRUSTED_PROXIES', '127.0.0.1,::1'),
+            headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
+                     \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
+                     \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
+                     \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Return JSON for API routes on validation errors

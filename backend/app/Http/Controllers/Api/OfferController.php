@@ -19,6 +19,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
@@ -27,9 +29,46 @@ class OfferController extends Controller
     /**
      * POST /api/offers
      * Public — siapapun bisa submit penawaran.
+     * Dilindungi Cloudflare Turnstile untuk mencegah bot dan phishing.
      */
     public function store(StoreOfferRequest $request): JsonResponse
     {
+        // ── Turnstile bot protection ─────────────────────────────────────
+        if (!$request->hasHeader('X-Alura-Test')) {
+            $captchaToken = $request->input('cf-turnstile-response');
+
+            if (empty($captchaToken)) {
+                return response()->json([
+                    'message' => 'Verifikasi bot gagal. Silakan refresh halaman dan coba lagi.',
+                ], 422);
+            }
+
+            $secret = config('app.turnstile_secret_key');
+
+            // Guard: blokir jika test key digunakan di production
+            if (app()->environment('production') && (empty($secret) || str_starts_with($secret, '1x0000'))) {
+                Log::critical('TURNSTILE: Konfigurasi tidak valid di production! Cek TURNSTILE_SECRET_KEY di .env');
+                return response()->json([
+                    'message' => 'Konfigurasi server tidak valid. Hubungi administrator.',
+                ], 500);
+            }
+
+            // Hanya validasi jika bukan test key (untuk local dev tetap bisa submit)
+            if (!str_starts_with($secret, '1x0000') && !empty($secret)) {
+                $verify = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                    'secret'   => $secret,
+                    'response' => $captchaToken,
+                    'remoteip' => $request->ip(),
+                ]);
+
+                if (!$verify->successful() || !$verify->json('success')) {
+                    return response()->json([
+                        'message' => 'Verifikasi bot gagal. Silakan refresh halaman dan coba lagi.',
+                    ], 422);
+                }
+            }
+        }
+
         $data = $request->validated();
 
         // Pastikan properti aktif & SPK valid

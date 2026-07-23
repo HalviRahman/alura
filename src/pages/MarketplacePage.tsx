@@ -43,14 +43,14 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen bg-background">
       <TopNavBar />
-      <main className="max-w-container-max mx-auto px-6 py-8 min-h-screen">
+      <main className="max-w-container-max mx-auto px-4 sm:px-6 py-6 sm:py-8 min-h-screen">
         {/* Header */}
         <section className="mb-8">
           <div className="flex flex-col gap-3">
-            <h1 className="font-headline font-bold text-5xl text-primary leading-tight tracking-tight">
+            <h1 className="font-headline font-bold text-3xl sm:text-5xl text-primary leading-tight tracking-tight">
               Marketplace Properti
             </h1>
-            <p className="font-body text-base text-on-surface-variant max-w-2xl">
+            <p className="font-body text-sm sm:text-base text-on-surface-variant max-w-2xl">
               Temukan aset properti institusional dengan transparansi penuh dan proses yang aman.
             </p>
           </div>
@@ -59,7 +59,7 @@ export default function MarketplacePage() {
 
         {/* Stats */}
         {!isLoading && (
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <p className="font-mono text-xs text-on-surface-variant">
               Menampilkan <span className="font-bold text-primary">{total}</span> properti
             </p>
@@ -71,7 +71,7 @@ export default function MarketplacePage() {
                   setSort(e.target.value as typeof sort)
                   setCurrentPage(1)
                 }}
-                className="font-mono text-xs border border-outline-variant rounded-lg px-3 py-1.5 bg-surface text-on-surface focus:ring-1 focus:ring-primary outline-none"
+                className="flex-1 sm:flex-none font-mono text-xs border border-outline-variant rounded-lg px-3 py-1.5 bg-surface text-on-surface focus:ring-1 focus:ring-primary outline-none"
               >
                 <option value="newest">Terbaru</option>
                 <option value="price_asc">Harga Terendah</option>

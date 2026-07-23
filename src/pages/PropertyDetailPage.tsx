@@ -78,9 +78,9 @@ export default function PropertyDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       <TopNavBar />
-      <main className="max-w-container-max mx-auto px-6 py-8">
+      <main className="max-w-container-max mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Breadcrumbs */}
-        <div className="flex items-center gap-2 mb-5 text-on-surface-variant font-mono text-xs">
+        <div className="hidden sm:flex items-center gap-2 mb-5 text-on-surface-variant font-mono text-xs">
           <Link to="/" className="hover:text-primary transition-colors">Marketplace</Link>
           <span className="material-symbols-outlined text-[16px]">chevron_right</span>
           <span className="text-on-surface-variant">{property.province}</span>
@@ -88,66 +88,69 @@ export default function PropertyDetailPage() {
           <span className="text-primary font-bold">{property.title}</span>
         </div>
 
-        {/* Bento Photo Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 h-auto md:h-[480px]">
-          {/* Main image */}
-          <div className="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-xl group cursor-pointer" onClick={() => setActiveImg(0)}>
-            <img
-              src={images[activeImg] || images[0]}
-              alt={property.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 min-h-[300px]"
-            />
-            <div className="absolute top-4 left-4 flex gap-2">
-              {property.badge && (
-                <span className="bg-status-success text-white px-3 py-1 rounded text-[10px] font-bold font-mono uppercase">
-                  {property.badge}
-                </span>
-              )}
-              {isManajemen && property.spk && (
-                <span className="bg-primary text-white px-3 py-1 rounded text-[10px] font-bold font-mono uppercase">
-                  SPK {property.spk.status.toUpperCase()}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Thumbnail grid */}
-          {[1, 2, 3].map(idx => (
-            <div key={idx} className={`overflow-hidden rounded-xl bg-surface-container ${idx === 3 ? 'relative' : ''}`}>
-              {images[idx] ? (
-                <>
+        {/* Photo: mobile = horizontal scroll, md+ = bento grid */}
+        <div className="mb-6">
+          {/* Mobile: swipeable horizontal photos */}
+          <div className="sm:hidden">
+            <div className="flex gap-2 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4">
+              {images.map((img, idx) => (
+                <div key={idx} className="flex-none w-[85vw] snap-center overflow-hidden rounded-xl">
                   <img
-                    src={images[idx]}
+                    src={img}
                     alt={`${property.title} ${idx + 1}`}
-                    className="w-full h-full object-cover hover:opacity-90 transition-opacity cursor-pointer min-h-[120px]"
+                    className="w-full h-56 object-cover"
                     onClick={() => setActiveImg(idx)}
                   />
-                  {idx === 3 && images.length > 4 && (
-                    <button
-                      onClick={() => setActiveImg(0)}
-                      className="absolute bottom-3 right-3 bg-surface/90 backdrop-blur-sm border border-outline-variant px-3 py-1.5 rounded-lg font-mono text-xs hover:bg-surface transition-all flex items-center gap-1.5 text-on-surface"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">photo_library</span>
-                      Lihat {images.length} Foto
-                    </button>
-                  )}
-                </>
-              ) : (
-                <div className="w-full h-full bg-surface-container-high min-h-[120px] flex items-center justify-center">
-                  <span className="material-symbols-outlined text-outline-variant text-[32px]">image</span>
                 </div>
-              )}
+              ))}
             </div>
-          ))}
+            <p className="font-mono text-[10px] text-on-surface-variant text-center mt-1.5">{images.length} foto — geser untuk melihat semua</p>
+          </div>
+          {/* Desktop: bento grid */}
+          <div className="hidden sm:grid grid-cols-1 md:grid-cols-4 gap-3 h-auto md:h-[480px]">
+            <div className="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-xl group cursor-pointer" onClick={() => setActiveImg(0)}>
+              <img
+                src={images[activeImg] || images[0]}
+                alt={property.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 min-h-[300px]"
+              />
+              <div className="absolute top-4 left-4 flex gap-2">
+                {property.badge && (
+                  <span className="bg-status-success text-white px-3 py-1 rounded text-[10px] font-bold font-mono uppercase">{property.badge}</span>
+                )}
+                {isManajemen && property.spk && (
+                  <span className="bg-primary text-white px-3 py-1 rounded text-[10px] font-bold font-mono uppercase">SPK {property.spk.status.toUpperCase()}</span>
+                )}
+              </div>
+            </div>
+            {[1, 2, 3].map(idx => (
+              <div key={idx} className={`overflow-hidden rounded-xl bg-surface-container ${idx === 3 ? 'relative' : ''}`}>
+                {images[idx] ? (
+                  <>
+                    <img src={images[idx]} alt={`${property.title} ${idx + 1}`} className="w-full h-full object-cover hover:opacity-90 transition-opacity cursor-pointer min-h-[120px]" onClick={() => setActiveImg(idx)} />
+                    {idx === 3 && images.length > 4 && (
+                      <button onClick={() => setActiveImg(0)} className="absolute bottom-3 right-3 bg-surface/90 backdrop-blur-sm border border-outline-variant px-3 py-1.5 rounded-lg font-mono text-xs hover:bg-surface transition-all flex items-center gap-1.5 text-on-surface">
+                        <span className="material-symbols-outlined text-[16px]">photo_library</span>Lihat {images.length} Foto
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="w-full h-full bg-surface-container-high min-h-[120px] flex items-center justify-center">
+                    <span className="material-symbols-outlined text-outline-variant text-[32px]">image</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Detail + Sticky CTA */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 pb-32 sm:pb-0">
           {/* Left: Details */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6">
             {/* Title */}
             <section>
-              <h1 className="font-headline font-semibold text-3xl text-primary mb-3">{property.title}</h1>
+              <h1 className="font-headline font-semibold text-2xl sm:text-3xl text-primary mb-3">{property.title}</h1>
               <div className="flex flex-wrap items-center gap-4 text-on-surface-variant font-body text-sm">
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[18px]">location_on</span>
@@ -211,8 +214,8 @@ export default function PropertyDetailPage() {
             </div>
           </div>
 
-          {/* Right: Sticky Offer Card */}
-          <div className="lg:col-span-1">
+          {/* Right: Offer Card — hidden on mobile (shown as fixed bottom bar instead) */}
+          <div className="hidden lg:block lg:col-span-1">
             <div className="sticky top-24 p-6 bg-surface border border-outline-variant rounded-xl shadow-sm">
               {/* Price */}
               <div className="mb-5">
@@ -275,6 +278,28 @@ export default function PropertyDetailPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Mobile fixed bottom CTA */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-outline-variant px-4 py-3 flex items-center gap-3 shadow-2xl">
+          <div className="flex-1 min-w-0">
+            <p className="font-mono text-[9px] text-on-surface-variant uppercase tracking-widest">Harga Jual</p>
+            <p className="font-headline font-bold text-base text-primary leading-tight truncate">{formatPriceFull(property.harga_jual ?? property.harga_penawaran)}</p>
+          </div>
+          <button
+            onClick={() => setInquiryModalOpen(true)}
+            className="border border-outline text-primary font-mono font-bold text-xs px-4 py-2.5 rounded-lg hover:bg-surface-container-low transition-colors whitespace-nowrap"
+          >
+            Tanya Detail
+          </button>
+          <button
+            id="open-offer-modal-btn"
+            onClick={() => setModalOpen(true)}
+            className="bg-primary text-on-primary font-mono font-bold text-xs px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-1.5 whitespace-nowrap"
+          >
+            <span className="material-symbols-outlined text-[16px]">send</span>
+            Ajukan Penawaran
+          </button>
         </div>
       </main>
 
