@@ -20,13 +20,30 @@ services:
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
-      - DB_CONNECTION=sqlite
-      - DB_DATABASE=/var/www/html/database/database.sqlite
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=alura_db
+      - DB_USERNAME=alura_user
+      - DB_PASSWORD=alura_secret_password
     volumes:
       - backend_storage:/var/www/html/storage
-      - backend_db:/var/www/html/database
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: mysql:8.0
+    container_name: alura_mysql
+    environment:
+      MYSQL_DATABASE: alura_db
+      MYSQL_USER: alura_user
+      MYSQL_PASSWORD: alura_secret_password
+      MYSQL_ROOT_PASSWORD: alura_root_password
+    volumes:
+      - mysql_data:/var/lib/mysql
     restart: always
 
 volumes:
   backend_storage:
-  backend_db:
+  mysql_data:
