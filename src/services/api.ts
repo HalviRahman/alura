@@ -10,8 +10,10 @@ import type {
 
 // ─── Axios instance ────────────────────────────────────────────────────────
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -278,7 +280,7 @@ export const adminApi = {
   reportsExportUrl: (params: Record<string, string>) => {
     const token = localStorage.getItem('alura_token')
     const qs = new URLSearchParams({ ...params, format: 'csv' }).toString()
-    return `http://localhost:8000/api/admin/reports?${qs}`
+    return `${API_BASE_URL}/admin/reports?${qs}`
   },
 
   mapLocations: () =>
